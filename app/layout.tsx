@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'task-timer-beryl-omega.vercel.app'
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://task-timer-beryl-omega.vercel.app/'
 
 export const metadata: Metadata = {
   title: {
