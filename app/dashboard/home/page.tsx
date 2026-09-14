@@ -5,5 +5,5 @@ export const metadata: Metadata = {
   description: "Dashboard of ErgMaster"
 };
 export default function Page() {
-  return <div>Dashboard</div>;
+  return <div>Home</div>;
 }
