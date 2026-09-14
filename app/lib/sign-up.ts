@@ -5,6 +5,6 @@ export function signUp(email: string, password: string, name: string) {
     email,
     password,
     name,
-    callbackURL: "/dashboard",
+    callbackURL: "/dashboard/home",
   });
 }
