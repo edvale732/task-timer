@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "Dashboard of ErgMaster"
+  title: "Home",
+  description: "Home of Task Timer"
 };
 export default function Page() {
   return <div>Home</div>;
