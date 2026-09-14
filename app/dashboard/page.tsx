@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Login from "@/app/ui/login";
 
 export const metadata: Metadata = {
-  title: "Login",
-  description: "Login to ErgMaster"
+  title: "Dashboard",
+  description: "Dashboard of ErgMaster"
 };
 export default function Page() {
-  return <Login />;
+  return <div>Dashboard</div>;
 }
