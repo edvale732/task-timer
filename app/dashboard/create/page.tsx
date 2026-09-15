@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import TaskForm from "./task-form";
+import TaskForm from "../../ui/create/task-form";
 
 export const metadata: Metadata = {
   title: "Create",
