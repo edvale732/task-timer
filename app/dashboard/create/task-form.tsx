@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Form from "next/form";
 import { createTask } from "@/app/lib/actions";
 
@@ -8,7 +8,6 @@ const fieldClassName = "mt-2 w-full rounded-xl border border-[#555555] bg-[#1b1b
 const initialCreateTaskState: { message: string; error?: boolean } = { message: "" };
 
 export default function TaskForm() {
-  const [state, formAction, isPending] = useActionState(createTask, initialCreateTaskState);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [targetMinutes, setTargetMinutes] = useState("25");
@@ -16,9 +15,68 @@ export default function TaskForm() {
   const [recurrenceInterval, setRecurrenceInterval] = useState("1");
   const [recurrenceUnit, setRecurrenceUnit] = useState("day");
   const [recurrenceStartDate, setRecurrenceStartDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [successMessage, setSuccessMessage] = useState("");
+  const [successSeconds, setSuccessSeconds] = useState(0);
+  const successTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const successInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (successTimeout.current) {
+        clearTimeout(successTimeout.current);
+      }
+      if (successInterval.current) {
+        clearInterval(successInterval.current);
+      }
+    };
+  }, []);
+
+  function resetFields() {
+    setTitle("");
+    setDescription("");
+    setTargetMinutes("25");
+    setRecurrenceType("once");
+    setRecurrenceInterval("1");
+    setRecurrenceUnit("day");
+    setRecurrenceStartDate(new Date().toISOString().slice(0, 10));
+  }
+
+  const [state, formAction, isPending] = useActionState(async (previousState: typeof initialCreateTaskState, formData: FormData) => {
+    const nextState = await createTask(previousState, formData);
+
+    if (!nextState.error) {
+      resetFields();
+      setSuccessMessage(nextState.message);
+      setSuccessSeconds(3);
+      if (successTimeout.current) {
+        clearTimeout(successTimeout.current);
+      }
+      if (successInterval.current) {
+        clearInterval(successInterval.current);
+      }
+      successInterval.current = setInterval(() => {
+        setSuccessSeconds((seconds) => Math.max(seconds - 1, 0));
+      }, 1000);
+      successTimeout.current = setTimeout(() => {
+        setSuccessMessage("");
+        setSuccessSeconds(0);
+        if (successInterval.current) {
+          clearInterval(successInterval.current);
+          successInterval.current = null;
+        }
+      }, 3000);
+    }
+
+    return nextState;
+  }, initialCreateTaskState);
 
   return (
-    <Form action={formAction} className="rounded-2xl border border-[#383838] bg-[#242424] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.2)] sm:p-8">
+    <Form action={formAction} className="relative rounded-2xl border border-[#383838] bg-[#242424] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.2)] sm:p-8">
+      {state.message && state.error && (
+        <p role="status" aria-live="polite" className={`mb-6 rounded-xl border px-4 py-3 text-sm ${state.error ? "border-[#704747] bg-[#3a2525] text-[#e5aaaa]" : "border-[#49654e] bg-[#26362a] text-[#b9d8bd]"}`}>
+          {state.message}
+        </p>
+      )}
       <div className="space-y-6">
         <label className="block text-sm font-semibold text-[#ededed]">
           Task name
@@ -95,7 +153,13 @@ export default function TaskForm() {
       </div>
 
       <div className="mt-8 flex flex-col gap-4 border-t border-[#383838] pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <p role="status" aria-live="polite" className={`text-sm ${state.error ? "text-[#d99a9a]" : "text-[#b8b8b8]"}`}>{state.message}</p>
+        {successMessage ? (
+          <div role="status" aria-live="polite" className={`rounded-xl border border-[#49654e] bg-[#26362a] px-4 py-3 text-sm text-[#b9d8bd] shadow-[0_12px_32px_rgba(0,0,0,0.35)] transition-opacity duration-1000 ${successSeconds <= 1 ? "opacity-0" : "opacity-100"}`}>
+            {successMessage}
+          </div>
+        ) : (
+          <span aria-hidden="true" />
+        )}
         <button type="submit" disabled={isPending} className="rounded-xl bg-[#d1d1d1] px-5 py-3 font-semibold text-[#1b1b1b] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d1d1d1] focus:ring-offset-2 focus:ring-offset-[#242424] disabled:cursor-wait disabled:opacity-60">
           {isPending ? "Creating..." : "Create task"}
         </button>
