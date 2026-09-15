@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
+import TaskForm from "../../ui/create/task-form";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "Dashboard of ErgMaster"
+  title: "Create",
+  description: "Create a task"
 };
+
 export default function Page() {
-  return <div>Create</div>;
+  return (
+    <section className="mx-auto max-w-2xl">
+      <div className="mb-8">
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">Create new task</h1>
+      </div>
+      <TaskForm />
+    </section>
+  );
 }
