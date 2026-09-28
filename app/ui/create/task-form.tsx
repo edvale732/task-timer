@@ -3,9 +3,10 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import Form from "next/form";
 import { createTask } from "@/app/lib/actions";
+import type { CreateTaskState } from "@/app/lib/types";
 
 const fieldClassName = "mt-2 w-full rounded-xl border border-[#555555] bg-[#1b1b1b] px-4 py-3 text-[#ededed] outline-none transition placeholder:text-[#707070] focus:border-[#d1d1d1]";
-const initialCreateTaskState: { message: string; error?: boolean } = { message: "" };
+const initialCreateTaskState: CreateTaskState = { message: "" };
 
 export default function TaskForm() {
   const [title, setTitle] = useState("");
@@ -137,7 +138,6 @@ export default function TaskForm() {
                     <option value="day">day(s)</option>
                     <option value="week">week(s)</option>
                     <option value="month">month(s)</option>
-                    <option value="year">year(s)</option>
                   </select>
                 </div>
               </label>
