@@ -1,17 +1,9 @@
 "use server";
 
-import { Pool } from "@neondatabase/serverless";
 import { headers } from "next/headers";
 import { auth } from "@/app/lib/auth";
-
-const pool = new Pool({
-	connectionString: process.env.DATABASE_URL,
-});
-
-type CreateTaskState = {
-	message: string;
-	error?: boolean;
-};
+import { insertTask } from "@/app/lib/queries";
+import type { CreateTaskState } from "@/app/lib/types";
 
 export async function createTask(
 	_previousState: CreateTaskState,
@@ -62,33 +54,21 @@ export async function createTask(
 			return { message: "Repeat interval must be a positive whole number.", error: true };
 		}
 
-		if (!["day", "week", "month", "year"].includes(recurrenceUnit)) {
+		if (!["day", "week", "month"].includes(recurrenceUnit)) {
 			return { message: "Choose a valid recurrence unit.", error: true };
 		}
 	}
 
-	await pool.query(
-		`INSERT INTO "task" (
-			"user_id",
-			"title",
-			"description",
-			"target_minutes",
-			"recurrence_type",
-			"recurrence_interval",
-			"recurrence_unit",
-			"recurrence_start_date"
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-		[
-			session.user.id,
-			title,
-			description,
-			targetMinutes,
-			recurrenceType,
-			recurrenceInterval,
-			recurrenceUnit,
-			recurrenceStartDate,
-		],
-	);
+	await insertTask({
+		userId: session.user.id,
+		title,
+		description,
+		targetMinutes,
+		recurrenceType,
+		recurrenceInterval,
+		recurrenceUnit,
+		recurrenceStartDate,
+	});
 
 	return { message: `Task "${title}" created.` };
 }
