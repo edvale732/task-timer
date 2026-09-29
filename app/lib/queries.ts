@@ -36,6 +36,11 @@ export async function getTodaysTasks(userId: string): Promise<TodaysTask[]> {
 		title: string;
 		description: string | null;
 		targetMinutes: number;
+		recurrenceType: "once" | "recurring";
+		recurrenceInterval: number | null;
+		recurrenceUnit: "day" | "week" | "month" | null;
+		recurrenceStartDate: string | Date;
+		monthlyOverflowBehavior: "last_day_of_month" | "skip" | null;
 		completedSeconds: number;
 		runningTaskId: string | null;
 		startedAt: string | null;
@@ -45,6 +50,11 @@ export async function getTodaysTasks(userId: string): Promise<TodaysTask[]> {
 			t."title" AS "title",
 			t."description" AS "description",
 			t."target_minutes" AS "targetMinutes",
+			t."recurrence_type" AS "recurrenceType",
+			t."recurrence_interval" AS "recurrenceInterval",
+			t."recurrence_unit" AS "recurrenceUnit",
+			t."recurrence_start_date" AS "recurrenceStartDate",
+			t."monthly_overflow_behavior" AS "monthlyOverflowBehavior",
 			COALESCE(SUM(CASE WHEN ts."started_at"::date = CURRENT_DATE THEN ts."duration_seconds" ELSE 0 END), 0)::integer AS "completedSeconds",
 			MAX(CASE WHEN ts."duration_seconds" IS NULL THEN ts."task_id"::text END) AS "runningTaskId",
 			MAX(CASE WHEN ts."duration_seconds" IS NULL AND ts."started_at"::date = CURRENT_DATE THEN ts."started_at" END) AS "startedAt"
@@ -77,7 +87,7 @@ export async function getTodaysTasks(userId: string): Promise<TodaysTask[]> {
 					)
 				)
 			)
-		GROUP BY t."id", t."title", t."description", t."target_minutes", t."recurrence_start_date"
+		GROUP BY t."id", t."title", t."description", t."target_minutes", t."recurrence_type", t."recurrence_interval", t."recurrence_unit", t."recurrence_start_date", t."monthly_overflow_behavior"
 		ORDER BY t."created_at", t."id"`,
 		[userId],
 	);
@@ -87,6 +97,13 @@ export async function getTodaysTasks(userId: string): Promise<TodaysTask[]> {
 		title: task.title,
 		description: task.description,
 		targetMinutes: task.targetMinutes,
+		recurrenceType: task.recurrenceType,
+		recurrenceInterval: task.recurrenceInterval,
+		recurrenceUnit: task.recurrenceUnit,
+		recurrenceStartDate: task.recurrenceStartDate instanceof Date
+			? task.recurrenceStartDate.toISOString().slice(0, 10)
+			: task.recurrenceStartDate,
+		monthlyOverflowBehavior: task.monthlyOverflowBehavior,
 		completedSeconds: Number(task.completedSeconds),
 		isRunning: task.runningTaskId !== null,
 		startedAt: task.runningTaskId !== null ? new Date(task.startedAt as string).toISOString() : null,
