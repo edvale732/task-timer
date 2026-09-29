@@ -4,6 +4,7 @@ import { auth } from "@/app/lib/auth";
 import { getTodaysTasks } from "@/app/lib/queries";
 import TaskGrid from "@/app/ui/task-grid";
 
+
 export const metadata: Metadata = {
   title: "Home",
   description: "Home of Task Timer"
@@ -20,7 +21,9 @@ export default async function Page() {
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#909090]">Today</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white">Your focus, in circles.</h1>
         </div>
-        <p className="hidden text-right text-sm text-[#909090] sm:block">{tasks.length} {tasks.length === 1 ? "task" : "tasks"} on the docket</p>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <p className="hidden text-right text-sm text-[#909090] sm:block">{tasks.length} {tasks.length === 1 ? "task" : "tasks"} on the docket</p>
+        </div>
       </div>
 
       {tasks.length === 0 ? (

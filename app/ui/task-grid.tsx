@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { getActiveSession, startTask, stopTask } from "@/app/lib/actions";
-import { formatDuration } from "@/app/lib/functions";
+import { formatDuration, formatNextDueDate, formatRecurrence } from "@/app/lib/functions";
 import type { TodaysTask } from "@/app/lib/types";
 import TaskRing from "@/app/ui/task-ring";
 
@@ -261,6 +261,12 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
               <TaskRing progress={progress} active={task.isRunning} />
               <div className="min-w-0 flex-1">
                 <h2 className="truncate text-lg font-semibold text-white">{task.title}</h2>
+                <p className="mt-1 text-xs text-[#909090]">
+                  {formatRecurrence(task.recurrenceType, task.recurrenceInterval, task.recurrenceUnit)}
+                </p>
+                <p className="mt-1 text-xs text-[#909090]">
+                  {formatNextDueDate(task.recurrenceStartDate, task.recurrenceType, task.recurrenceInterval, task.recurrenceUnit, task.monthlyOverflowBehavior)}
+                </p>
                 <p className="mt-2 text-sm text-[#a5a5a5]">
                   {formatDuration(liveSeconds)} / {formatDuration(targetSeconds)}
                 </p>
@@ -301,6 +307,12 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
             <div>
               <h2 className="text-3xl font-semibold text-white">{focusedTask.title}</h2>
               {focusedTask.description && <p className="mt-3 text-base text-[#c5c5c5]">{focusedTask.description}</p>}
+              <p className="mt-3 text-sm text-[#909090]">
+                {formatRecurrence(focusedTask.recurrenceType, focusedTask.recurrenceInterval, focusedTask.recurrenceUnit)}
+              </p>
+              <p className="mt-1 text-sm text-[#909090]">
+                {formatNextDueDate(focusedTask.recurrenceStartDate, focusedTask.recurrenceType, focusedTask.recurrenceInterval, focusedTask.recurrenceUnit, focusedTask.monthlyOverflowBehavior)}
+              </p>
               <p className="mt-4 text-lg text-[#a5a5a5]">
                 {formatDuration(focusedLiveSeconds)} / {formatDuration(focusedTargetSeconds)}
               </p>
