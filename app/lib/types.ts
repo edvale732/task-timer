@@ -19,6 +19,11 @@ export type TodaysTask = {
   title: string;
   description: string | null;
   targetMinutes: number;
+  recurrenceType: "once" | "recurring";
+  recurrenceInterval: number | null;
+  recurrenceUnit: "day" | "week" | "month" | null;
+  recurrenceStartDate: string;
+  monthlyOverflowBehavior: "last_day_of_month" | "skip" | null;
   completedSeconds: number;
   isRunning: boolean;
   startedAt: string | null;
