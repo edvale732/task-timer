@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { auth } from "@/app/lib/auth";
-import { formatDuration } from "@/app/lib/functions";
 import { getTodaysTasks } from "@/app/lib/queries";
-import TaskRing from "@/app/ui/task-ring";
+import TaskGrid from "@/app/ui/task-grid";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -30,24 +29,7 @@ export default async function Page() {
           <p className="mt-2 text-[#a5a5a5]">Create a task and it will appear here when it is due.</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tasks.map((task) => {
-            const targetSeconds = task.targetMinutes * 60;
-            const progress = Math.min(task.spentSeconds / targetSeconds, 1);
-
-            return (
-              <article key={task.id} className="flex items-center gap-5 rounded-2xl border border-[#383838] bg-[#242424] p-5 shadow-[0_16px_45px_rgba(0,0,0,0.18)]">
-                <TaskRing progress={progress} />
-                <div className="min-w-0">
-                  <h2 className="truncate text-lg font-semibold text-white">{task.title}</h2>
-                  <p className="mt-2 text-sm text-[#a5a5a5]">
-                    {formatDuration(task.spentSeconds)} / {formatDuration(task.targetMinutes * 60)}
-                  </p>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+        <TaskGrid initialTasks={tasks} />
       )}
     </section>
   );

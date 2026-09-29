@@ -1,5 +1,5 @@
 import { Pool } from "@neondatabase/serverless";
-import type { CreateTaskInput, TodaysTask } from "@/app/lib/types";
+import type { ActiveSessionSnapshot, CreateTaskInput, TodaysTask } from "@/app/lib/types";
 
 const pool = new Pool({
 	connectionString: process.env.DATABASE_URL,
@@ -31,17 +31,21 @@ export async function insertTask(task: CreateTaskInput): Promise<void> {
 }
 
 export async function getTodaysTasks(userId: string): Promise<TodaysTask[]> {
-	const result = await pool.query<TodaysTask>(
+	const result = await pool.query<{
+		id: string;
+		title: string;
+		targetMinutes: number;
+		completedSeconds: number;
+		runningTaskId: string | null;
+		startedAt: string | null;
+	}>(
 		`SELECT
 			t."id"::text AS "id",
 			t."title" AS "title",
 			t."target_minutes" AS "targetMinutes",
-			COALESCE(SUM(
-				COALESCE(
-					ts."duration_seconds",
-					GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - ts."started_at"))))::integer
-				)
-			), 0)::integer AS "spentSeconds"
+			COALESCE(SUM(ts."duration_seconds"), 0)::integer AS "completedSeconds",
+			MAX(CASE WHEN ts."duration_seconds" IS NULL THEN ts."task_id"::text END) AS "runningTaskId",
+			MAX(CASE WHEN ts."duration_seconds" IS NULL THEN ts."started_at" END) AS "startedAt"
 		FROM "task" t
 		LEFT JOIN "task_session" ts
 			ON ts."task_id" = t."id"
@@ -77,7 +81,86 @@ export async function getTodaysTasks(userId: string): Promise<TodaysTask[]> {
 	);
 
 	return result.rows.map((task) => ({
-		...task,
-		spentSeconds: Number(task.spentSeconds),
+		id: task.id,
+		title: task.title,
+		targetMinutes: task.targetMinutes,
+		completedSeconds: Number(task.completedSeconds),
+		isRunning: task.runningTaskId !== null,
+		startedAt: task.runningTaskId !== null ? new Date(task.startedAt as string).toISOString() : null,
 	}));
+}
+
+export async function getActiveSessionSnapshot(userId: string): Promise<ActiveSessionSnapshot> {
+	const result = await pool.query<{ taskId: string; startedAt: string }>(
+		`SELECT "task_id"::text AS "taskId", "started_at" AS "startedAt"
+		FROM "task_session"
+		WHERE "user_id" = $1 AND "duration_seconds" IS NULL
+		LIMIT 1`,
+		[userId],
+	);
+
+	const row = result.rows[0];
+	return row
+		? { taskId: row.taskId, startedAt: new Date(row.startedAt).toISOString() }
+		: { taskId: null, startedAt: null };
+}
+
+export type StartedSession = {
+	startedAt: string;
+	stoppedTaskId: string | null;
+	stoppedSessionSeconds: number | null;
+};
+
+export async function startTaskSession(userId: string, taskId: string): Promise<StartedSession> {
+	const client = await pool.connect();
+
+	try {
+		await client.query("BEGIN");
+
+		const stopped = await client.query<{ taskId: string; durationSeconds: number }>(
+			`UPDATE "task_session"
+			SET "ended_at" = NOW(), "duration_seconds" = GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - "started_at"))))::integer
+			WHERE "user_id" = $1 AND "duration_seconds" IS NULL
+			RETURNING "task_id"::text AS "taskId", "duration_seconds" AS "durationSeconds"`,
+			[userId],
+		);
+
+		const inserted = await client.query<{ startedAt: string }>(
+			`INSERT INTO "task_session" ("task_id", "user_id", "started_at")
+			VALUES ($1, $2, NOW())
+			RETURNING "started_at" AS "startedAt"`,
+			[taskId, userId],
+		);
+
+		await client.query("COMMIT");
+
+		const stoppedRow = stopped.rows[0];
+
+		return {
+			startedAt: new Date(inserted.rows[0].startedAt).toISOString(),
+			stoppedTaskId: stoppedRow ? stoppedRow.taskId : null,
+			stoppedSessionSeconds: stoppedRow ? Number(stoppedRow.durationSeconds) : null,
+		};
+	} catch (error) {
+		await client.query("ROLLBACK");
+		throw error;
+	} finally {
+		client.release();
+	}
+}
+
+export async function stopTaskSession(userId: string, taskId: string): Promise<number> {
+	const result = await pool.query<{ durationSeconds: number }>(
+		`UPDATE "task_session"
+		SET "ended_at" = NOW(), "duration_seconds" = GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - "started_at"))))::integer
+		WHERE "task_id" = $1 AND "user_id" = $2 AND "duration_seconds" IS NULL
+		RETURNING "duration_seconds" AS "durationSeconds"`,
+		[taskId, userId],
+	);
+
+	if (result.rows.length === 0) {
+		throw new Error("No running session found for this task.");
+	}
+
+	return Number(result.rows[0].durationSeconds);
 }

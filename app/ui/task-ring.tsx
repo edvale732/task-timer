@@ -1,6 +1,6 @@
 import type { TaskRingProps } from "@/app/lib/types";
 
-export default function TaskRing({ progress }: TaskRingProps) {
+export default function TaskRing({ progress, active }: TaskRingProps) {
   const radius = 44;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - progress);
@@ -14,11 +14,12 @@ export default function TaskRing({ progress }: TaskRingProps) {
           cy="50"
           r={radius}
           fill="none"
-          stroke="#d1d1d1"
+          stroke={active ? "#4ade80" : "#d1d1d1"}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
           strokeWidth="7"
+          className="transition-[stroke-dashoffset,stroke] duration-300 ease-linear"
         />
       </svg>
       <span className="absolute inset-0 flex items-center justify-center text-lg font-semibold text-white">
