@@ -21,7 +21,7 @@ export default function Login() {
 
   useEffect(() => {
     if (session.data?.user) {
-      router.replace("/dashboard/home");
+      router.replace("/dashboard/calendar/day");
     }
   }, [router, session.data?.user]);
 

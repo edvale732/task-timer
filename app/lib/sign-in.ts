@@ -4,7 +4,7 @@ export function signIn(email: string, password: string) {
     return authClient.signIn.email({
         email,
         password,
-        callbackURL: "/dashboard/home",
+        callbackURL: "/dashboard/calendar/day",
         rememberMe: false,
     });
 }
@@ -12,6 +12,6 @@ export function signIn(email: string, password: string) {
 export function signInWithGoogle() {
     return authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard/home",
+        callbackURL: "/dashboard/calendar/day",
     });
 }

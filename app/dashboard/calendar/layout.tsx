@@ -5,9 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const views = [
-  { href: "/dashboard/home", label: "Day" },
-  { href: "/dashboard/week", label: "Week" },
-  { href: "/dashboard/month", label: "Month" },
+  { href: "/dashboard/calendar/day", label: "Day" },
+  { href: "/dashboard/calendar/week", label: "Week" },
+  { href: "/dashboard/calendar/month", label: "Month" },
 ];
 
 export default function CalendarLayout({ children }: { children: ReactNode }) {
