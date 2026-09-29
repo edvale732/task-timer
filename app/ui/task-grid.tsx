@@ -153,7 +153,7 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
             ...task,
             isRunning: false,
             startedAt: null,
-            completedSeconds: task.completedSeconds + elapsedSince(task.startedAt as string, now),
+            completedSeconds: task.completedSeconds + (task.startedAt ? elapsedSince(task.startedAt, now) : 0),
           };
         }
         return task;
