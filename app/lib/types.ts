@@ -17,6 +17,7 @@ export type CreateTaskInput = {
 export type TodaysTask = {
   id: string;
   title: string;
+  description: string | null;
   targetMinutes: number;
   completedSeconds: number;
   isRunning: boolean;
@@ -39,4 +40,5 @@ export type StopTaskResult =
 export type TaskRingProps = {
   progress: number;
   active?: boolean;
+  size?: number;
 };
