@@ -29,6 +29,16 @@ export type TodaysTask = {
   startedAt: string | null;
 };
 
+export type CalendarTask = {
+  id: string;
+  title: string;
+  recurrenceType: "once" | "recurring";
+  recurrenceInterval: number | null;
+  recurrenceUnit: "day" | "week" | "month" | null;
+  recurrenceStartDate: string;
+  monthlyOverflowBehavior: "last_day_of_month" | "skip" | null;
+};
+
 export type ActiveSessionSnapshot = {
   taskId: string | null;
   startedAt: string | null;
