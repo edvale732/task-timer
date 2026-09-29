@@ -3,7 +3,9 @@ import type { TaskRingProps } from "@/app/lib/types";
 export default function TaskRing({ progress, active }: TaskRingProps) {
   const radius = 44;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - progress);
+  const isComplete = progress >= 1;
+  const ringProgress = Math.min(Math.max(progress, 0), 1);
+  const offset = circumference * (1 - ringProgress);
 
   return (
     <div className="relative h-28 w-28 shrink-0" aria-label={`${Math.round(progress * 100)} percent complete`}>
@@ -14,7 +16,7 @@ export default function TaskRing({ progress, active }: TaskRingProps) {
           cy="50"
           r={radius}
           fill="none"
-          stroke={active ? "#4ade80" : "#d1d1d1"}
+          stroke={isComplete ? "#facc15" : active ? "#4ade80" : "#d1d1d1"}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
