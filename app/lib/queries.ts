@@ -34,6 +34,7 @@ export async function getTodaysTasks(userId: string): Promise<TodaysTask[]> {
 	const result = await pool.query<{
 		id: string;
 		title: string;
+		description: string | null;
 		targetMinutes: number;
 		completedSeconds: number;
 		runningTaskId: string | null;
@@ -42,6 +43,7 @@ export async function getTodaysTasks(userId: string): Promise<TodaysTask[]> {
 		`SELECT
 			t."id"::text AS "id",
 			t."title" AS "title",
+			t."description" AS "description",
 			t."target_minutes" AS "targetMinutes",
 			COALESCE(SUM(ts."duration_seconds"), 0)::integer AS "completedSeconds",
 			MAX(CASE WHEN ts."duration_seconds" IS NULL THEN ts."task_id"::text END) AS "runningTaskId",
@@ -75,7 +77,7 @@ export async function getTodaysTasks(userId: string): Promise<TodaysTask[]> {
 					)
 				)
 			)
-		GROUP BY t."id", t."title", t."target_minutes", t."recurrence_start_date"
+		GROUP BY t."id", t."title", t."description", t."target_minutes", t."recurrence_start_date"
 		ORDER BY t."created_at", t."id"`,
 		[userId],
 	);
@@ -83,6 +85,7 @@ export async function getTodaysTasks(userId: string): Promise<TodaysTask[]> {
 	return result.rows.map((task) => ({
 		id: task.id,
 		title: task.title,
+		description: task.description,
 		targetMinutes: task.targetMinutes,
 		completedSeconds: Number(task.completedSeconds),
 		isRunning: task.runningTaskId !== null,
