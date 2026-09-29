@@ -24,16 +24,53 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
   const [tasks, setTasks] = useState(initialTasks);
   const [now, setNow] = useState(() => Date.now());
   const [error, setError] = useState<string | null>(null);
+  const [completionToasts, setCompletionToasts] = useState<{ id: string; title: string }[]>([]);
   const [isPending, startTransition] = useTransition();
   const channelRef = useRef<BroadcastChannel | null>(null);
+  const tasksRef = useRef(tasks);
+  // Tasks that already reached their target before/without us observing the crossing live (e.g. on page load).
+  const notifiedRef = useRef(
+    new Set(initialTasks.filter((task) => task.completedSeconds >= task.targetMinutes * 60).map((task) => task.id)),
+  );
 
   const hasRunningTask = tasks.some((task) => task.isRunning);
+
+  useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
+
+  useEffect(() => {
+    if (typeof Notification === "undefined" || Notification.permission !== "default") return;
+    Notification.requestPermission();
+  }, []);
 
   // Tick every second only while a task is actively running, to avoid unnecessary re-renders.
   useEffect(() => {
     if (!hasRunningTask) return;
 
-    const interval = setInterval(() => setNow(Date.now()), 1000);
+    const interval = setInterval(() => {
+      const nowMs = Date.now();
+      setNow(nowMs);
+
+      for (const task of tasksRef.current) {
+        if (!task.isRunning || !task.startedAt || notifiedRef.current.has(task.id)) continue;
+
+        const liveSeconds = task.completedSeconds + elapsedSince(task.startedAt, nowMs);
+        if (liveSeconds < task.targetMinutes * 60) continue;
+
+        notifiedRef.current.add(task.id);
+
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          new Notification("Target reached", { body: `"${task.title}" is complete! Well done` });
+        }
+
+        setCompletionToasts((prev) => [...prev, { id: task.id, title: task.title }]);
+        setTimeout(() => {
+          setCompletionToasts((prev) => prev.filter((toast) => toast.id !== task.id));
+        }, 6000);
+      }
+    }, 1000);
+
     return () => clearInterval(interval);
   }, [hasRunningTask]);
 
@@ -177,13 +214,22 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
   return (
     <div>
       {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
+      {completionToasts.length > 0 && (
+        <div className="mb-4 space-y-2">
+          {completionToasts.map((toast) => (
+            <p key={toast.id} className="rounded-lg border border-amber-700 bg-amber-950/40 px-4 py-2 text-sm text-amber-300">
+              🎉 &ldquo;{toast.title}&rdquo; is complete! Well done.
+            </p>
+          ))}
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {tasks.map((task) => {
           const liveSeconds = task.isRunning && task.startedAt
             ? task.completedSeconds + elapsedSince(task.startedAt, now)
             : task.completedSeconds;
           const targetSeconds = task.targetMinutes * 60;
-          const progress = Math.min(liveSeconds / targetSeconds, 1);
+          const progress = targetSeconds > 0 ? liveSeconds / targetSeconds : 0;
 
           return (
             <article key={task.id} className="flex items-center gap-5 rounded-2xl border border-[#383838] bg-[#242424] p-5 shadow-[0_16px_45px_rgba(0,0,0,0.18)]">
