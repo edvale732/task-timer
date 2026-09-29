@@ -1,5 +1,5 @@
 import { Pool } from "@neondatabase/serverless";
-import type { ActiveSessionSnapshot, CreateTaskInput, TodaysTask } from "@/app/lib/types";
+import type { ActiveSessionSnapshot, CalendarTask, CreateTaskInput, TodaysTask } from "@/app/lib/types";
 
 const pool = new Pool({
 	connectionString: process.env.DATABASE_URL,
@@ -185,4 +185,23 @@ export async function stopTaskSession(userId: string, taskId: string): Promise<n
 	}
 
 	return Number(result.rows[0].durationSeconds);
+}
+
+export async function getCalendarTasks(userId: string): Promise<CalendarTask[]> {
+	const result = await pool.query<CalendarTask>(
+		`SELECT
+			t."id"::text AS "id",
+			t."title" AS "title",
+			t."recurrence_type" AS "recurrenceType",
+			t."recurrence_interval" AS "recurrenceInterval",
+			t."recurrence_unit" AS "recurrenceUnit",
+			t."recurrence_start_date"::text AS "recurrenceStartDate",
+			t."monthly_overflow_behavior" AS "monthlyOverflowBehavior"
+		FROM "task" t
+		WHERE t."user_id" = $1 AND t."is_archived" = false
+		ORDER BY t."created_at", t."id"`,
+		[userId],
+	);
+
+	return result.rows;
 }
