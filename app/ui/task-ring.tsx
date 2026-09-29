@@ -1,6 +1,6 @@
 import type { TaskRingProps } from "@/app/lib/types";
 
-export default function TaskRing({ progress, active }: TaskRingProps) {
+export default function TaskRing({ progress, active, size = 112 }: TaskRingProps) {
   const radius = 44;
   const circumference = 2 * Math.PI * radius;
   const isComplete = progress >= 1;
@@ -8,7 +8,11 @@ export default function TaskRing({ progress, active }: TaskRingProps) {
   const offset = circumference * (1 - ringProgress);
 
   return (
-    <div className="relative h-28 w-28 shrink-0" aria-label={`${Math.round(progress * 100)} percent complete`}>
+    <div
+      className="relative shrink-0"
+      style={{ width: size, height: size }}
+      aria-label={`${Math.round(progress * 100)} percent complete`}
+    >
       <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100" role="img">
         <circle cx="50" cy="50" r={radius} fill="none" stroke="#3b3b3b" strokeWidth="7" />
         <circle
@@ -24,7 +28,10 @@ export default function TaskRing({ progress, active }: TaskRingProps) {
           className="transition-[stroke-dashoffset,stroke] duration-300 ease-linear"
         />
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-lg font-semibold text-white">
+      <span
+        className="absolute inset-0 flex items-center justify-center font-semibold text-white"
+        style={{ fontSize: size * 0.16 }}
+      >
         {Math.round(progress * 100)}%
       </span>
     </div>

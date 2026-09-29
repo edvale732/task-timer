@@ -26,6 +26,7 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
   const [error, setError] = useState<string | null>(null);
   const [completionToasts, setCompletionToasts] = useState<{ id: string; title: string }[]>([]);
   const [isPending, startTransition] = useTransition();
+  const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const tasksRef = useRef(tasks);
   // Tasks that already reached their target before/without us observing the crossing live (e.g. on page load).
@@ -128,6 +129,17 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (!focusedTaskId) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFocusedTaskId(null);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [focusedTaskId]);
+
   const handleStart = (taskId: string) => {
     setError(null);
     const previouslyRunning = tasks.find((task) => task.isRunning);
@@ -211,6 +223,15 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
     });
   };
 
+  const focusedTask = tasks.find((task) => task.id === focusedTaskId) ?? null;
+  const focusedLiveSeconds = focusedTask
+    ? focusedTask.isRunning && focusedTask.startedAt
+      ? focusedTask.completedSeconds + elapsedSince(focusedTask.startedAt, now)
+      : focusedTask.completedSeconds
+    : 0;
+  const focusedTargetSeconds = focusedTask ? focusedTask.targetMinutes * 60 : 0;
+  const focusedProgress = focusedTargetSeconds > 0 ? focusedLiveSeconds / focusedTargetSeconds : 0;
+
   return (
     <div>
       {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
@@ -232,7 +253,11 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
           const progress = targetSeconds > 0 ? liveSeconds / targetSeconds : 0;
 
           return (
-            <article key={task.id} className="flex items-center gap-5 rounded-2xl border border-[#383838] bg-[#242424] p-5 shadow-[0_16px_45px_rgba(0,0,0,0.18)]">
+            <article
+              key={task.id}
+              onClick={() => setFocusedTaskId(task.id)}
+              className="flex cursor-pointer items-center gap-5 rounded-2xl border border-[#383838] bg-[#242424] p-5 shadow-[0_16px_45px_rgba(0,0,0,0.18)] transition-colors hover:border-[#5a5a5a]"
+            >
               <TaskRing progress={progress} active={task.isRunning} />
               <div className="min-w-0 flex-1">
                 <h2 className="truncate text-lg font-semibold text-white">{task.title}</h2>
@@ -242,7 +267,14 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
                 <button
                   type="button"
                   disabled={isPending}
-                  onClick={() => (task.isRunning ? handleStop(task.id) : handleStart(task.id))}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (task.isRunning) {
+                      handleStop(task.id);
+                    } else {
+                      handleStart(task.id);
+                    }
+                  }}
                   className="mt-3 rounded-lg border border-[#4a4a4a] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {task.isRunning ? "Stop" : "Start"}
@@ -252,6 +284,38 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
           );
         })}
       </div>
+      {focusedTask && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-black/90 px-6 py-10 backdrop-blur-sm"
+          onClick={() => setFocusedTaskId(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setFocusedTaskId(null)}
+            className="absolute right-6 top-6 rounded-lg border border-[#4a4a4a] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#333333]"
+          >
+            Close
+          </button>
+          <div className="flex max-w-lg flex-col items-center gap-6 text-center" onClick={(event) => event.stopPropagation()}>
+            <TaskRing progress={focusedProgress} active={focusedTask.isRunning} size={280} />
+            <div>
+              <h2 className="text-3xl font-semibold text-white">{focusedTask.title}</h2>
+              {focusedTask.description && <p className="mt-3 text-base text-[#c5c5c5]">{focusedTask.description}</p>}
+              <p className="mt-4 text-lg text-[#a5a5a5]">
+                {formatDuration(focusedLiveSeconds)} / {formatDuration(focusedTargetSeconds)}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => (focusedTask.isRunning ? handleStop(focusedTask.id) : handleStart(focusedTask.id))}
+              className="rounded-lg border border-[#4a4a4a] px-8 py-3 text-lg font-medium text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {focusedTask.isRunning ? "Stop" : "Start"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
