@@ -45,9 +45,9 @@ export async function getTodaysTasks(userId: string): Promise<TodaysTask[]> {
 			t."title" AS "title",
 			t."description" AS "description",
 			t."target_minutes" AS "targetMinutes",
-			COALESCE(SUM(ts."duration_seconds"), 0)::integer AS "completedSeconds",
+			COALESCE(SUM(CASE WHEN ts."started_at"::date = CURRENT_DATE THEN ts."duration_seconds" ELSE 0 END), 0)::integer AS "completedSeconds",
 			MAX(CASE WHEN ts."duration_seconds" IS NULL THEN ts."task_id"::text END) AS "runningTaskId",
-			MAX(CASE WHEN ts."duration_seconds" IS NULL THEN ts."started_at" END) AS "startedAt"
+			MAX(CASE WHEN ts."duration_seconds" IS NULL AND ts."started_at"::date = CURRENT_DATE THEN ts."started_at" END) AS "startedAt"
 		FROM "task" t
 		LEFT JOIN "task_session" ts
 			ON ts."task_id" = t."id"
@@ -94,8 +94,9 @@ export async function getTodaysTasks(userId: string): Promise<TodaysTask[]> {
 }
 
 export async function getActiveSessionSnapshot(userId: string): Promise<ActiveSessionSnapshot> {
-	const result = await pool.query<{ taskId: string; startedAt: string }>(
-		`SELECT "task_id"::text AS "taskId", "started_at" AS "startedAt"
+	const result = await pool.query<{ taskId: string; startedAt: string | null }>(
+		`SELECT "task_id"::text AS "taskId",
+			CASE WHEN "started_at"::date = CURRENT_DATE THEN "started_at" END AS "startedAt"
 		FROM "task_session"
 		WHERE "user_id" = $1 AND "duration_seconds" IS NULL
 		LIMIT 1`,
@@ -104,7 +105,7 @@ export async function getActiveSessionSnapshot(userId: string): Promise<ActiveSe
 
 	const row = result.rows[0];
 	return row
-		? { taskId: row.taskId, startedAt: new Date(row.startedAt).toISOString() }
+		? { taskId: row.taskId, startedAt: row.startedAt ? new Date(row.startedAt).toISOString() : null }
 		: { taskId: null, startedAt: null };
 }
 
@@ -124,7 +125,8 @@ export async function startTaskSession(userId: string, taskId: string): Promise<
 			`UPDATE "task_session"
 			SET "ended_at" = NOW(), "duration_seconds" = GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - "started_at"))))::integer
 			WHERE "user_id" = $1 AND "duration_seconds" IS NULL
-			RETURNING "task_id"::text AS "taskId", "duration_seconds" AS "durationSeconds"`,
+			RETURNING "task_id"::text AS "taskId",
+				CASE WHEN "started_at"::date = CURRENT_DATE THEN "duration_seconds" ELSE 0 END AS "durationSeconds"`,
 			[userId],
 		);
 
@@ -157,7 +159,7 @@ export async function stopTaskSession(userId: string, taskId: string): Promise<n
 		`UPDATE "task_session"
 		SET "ended_at" = NOW(), "duration_seconds" = GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - "started_at"))))::integer
 		WHERE "task_id" = $1 AND "user_id" = $2 AND "duration_seconds" IS NULL
-		RETURNING "duration_seconds" AS "durationSeconds"`,
+		RETURNING CASE WHEN "started_at"::date = CURRENT_DATE THEN "duration_seconds" ELSE 0 END AS "durationSeconds"`,
 		[taskId, userId],
 	);
 
