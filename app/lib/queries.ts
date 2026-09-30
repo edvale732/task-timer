@@ -126,6 +126,23 @@ export async function getActiveSessionSnapshot(userId: string): Promise<ActiveSe
 		: { taskId: null, startedAt: null };
 }
 
+export async function getTotalFocusedSeconds(userId: string): Promise<number> {
+	const result = await pool.query<{ totalFocusedSeconds: number | string }>(
+		`SELECT COALESCE(
+			SUM(COALESCE(
+				"duration_seconds",
+				GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - "started_at"))))::integer
+			)),
+			0
+		)::bigint AS "totalFocusedSeconds"
+		FROM "task_session"
+		WHERE "user_id" = $1`,
+		[userId],
+	);
+
+	return Number(result.rows[0]?.totalFocusedSeconds ?? 0);
+}
+
 export type StartedSession = {
 	startedAt: string;
 	stoppedTaskId: string | null;
