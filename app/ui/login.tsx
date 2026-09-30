@@ -74,7 +74,7 @@ export default function Login() {
                 </button>
               ))}
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight">{mode === "sign-in" ? "Good to see you." : "Start your logbook."}</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">{mode === "sign-in" ? "Good to see you." : "Start your focus journey."}</h1>
             <p className="mt-2 text-text-muted">{mode === "sign-in" ? "Enter your details to continue." : "Set up your account in a few seconds."}</p>
             <form onSubmit={handleSubmit} className="mt-8 grid grid-cols-2 gap-5">
               {mode === "sign-up" && <label className="block text-sm font-semibold">Name<input required value={name} onChange={(event) => setName(event.target.value)} className="mt-2 w-full rounded-xl border border-border-strong bg-background px-4 py-3 font-normal outline-none transition focus:border-action" /></label>}
