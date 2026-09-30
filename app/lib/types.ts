@@ -44,13 +44,24 @@ export type ActiveSessionSnapshot = {
   startedAt: string | null;
 };
 
+export type CoinTransaction = {
+  id: string;
+  taskTitle: string;
+  amount: number;
+  completedOn: string;
+};
+
 export type StartTaskResult =
   | { error: string }
-  | { startedAt: string; stoppedTaskId: string | null; stoppedSessionSeconds: number | null };
+  | { startedAt: string; stoppedTaskId: string | null; stoppedSessionSeconds: number | null; stoppedTaskCoinsAwarded: number };
 
 export type StopTaskResult =
   | { error: string }
-  | { sessionSeconds: number };
+  | { sessionSeconds: number; coinsAwarded: number };
+
+export type AwardTaskCoinsResult =
+  | { error: string }
+  | { coinsAwarded: number };
 
 export type TaskRingProps = {
   progress: number;

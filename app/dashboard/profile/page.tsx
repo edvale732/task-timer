@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { auth } from "@/app/lib/auth";
-import { getCoinBalance, getTotalFocusedSeconds } from "@/app/lib/queries";
+import { getCoinBalance, getCoinTransactions, getTotalFocusedSeconds, recordTodaysCoinTransactions } from "@/app/lib/queries";
 import SignOutButton from "@/app/ui/sign-out-button";
 
 export const metadata: Metadata = {
@@ -25,9 +25,11 @@ export default async function Page() {
   }
 
   const { name, email, createdAt } = session.user;
-  const [totalFocusedSeconds, coinBalance] = await Promise.all([
+  await recordTodaysCoinTransactions(session.user.id);
+  const [totalFocusedSeconds, coinBalance, coinTransactions] = await Promise.all([
     getTotalFocusedSeconds(session.user.id),
     getCoinBalance(session.user.id),
+    getCoinTransactions(session.user.id),
   ]);
   const totalFocusedHours = Math.floor(totalFocusedSeconds / 3600);
   const totalFocusedMinutes = Math.floor((totalFocusedSeconds % 3600) / 60);
@@ -73,6 +75,31 @@ export default async function Page() {
           <SignOutButton />
         </div>
       </div>
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold text-white">Coin transaction history</h2>
+        {coinTransactions.length === 0 ? (
+          <p className="mt-4 text-sm text-[#a5a5a5]">No coin transactions yet.</p>
+        ) : (
+          <ol className="mt-4 divide-y divide-[#383838] border-y border-[#383838]">
+            {coinTransactions.map((transaction) => (
+              <li key={transaction.id} className="flex items-center justify-between gap-4 py-4">
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-[#ededed]">{transaction.taskTitle}</p>
+                  <p className="mt-1 text-sm text-[#909090]">
+                    {new Intl.DateTimeFormat("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      timeZone: "UTC",
+                    }).format(new Date(`${transaction.completedOn}T00:00:00Z`))}
+                  </p>
+                </div>
+                <p className="shrink-0 font-semibold text-[#ededed]">+{transaction.amount} coins</p>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
     </section>
   );
 }

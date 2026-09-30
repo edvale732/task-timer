@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { auth } from "@/app/lib/auth";
-import { getActiveSessionSnapshot, insertTask, startTaskSession, stopTaskSession } from "@/app/lib/queries";
+import { awardTaskCompletionCoins, getActiveSessionSnapshot, insertTask, startTaskSession, stopTaskSession } from "@/app/lib/queries";
 import type {
+	AwardTaskCoinsResult,
 	ActiveSessionSnapshot,
 	CreateTaskState,
 	StartTaskResult,
@@ -88,8 +89,12 @@ export async function startTask(taskId: string): Promise<StartTaskResult> {
 
 	try {
 		const result = await startTaskSession(session.user.id, taskId);
+		const stoppedTaskCoinsAwarded = result.stoppedTaskId
+			? await awardTaskCompletionCoins(session.user.id, result.stoppedTaskId).catch(() => 0)
+			: 0;
 		revalidatePath("/dashboard/home");
-		return result;
+		revalidatePath("/dashboard/profile");
+		return { ...result, stoppedTaskCoinsAwarded };
 	} catch {
 		return { error: "Could not start the task. Try again." };
 	}
@@ -104,10 +109,28 @@ export async function stopTask(taskId: string): Promise<StopTaskResult> {
 
 	try {
 		const sessionSeconds = await stopTaskSession(session.user.id, taskId);
+		const coinsAwarded = await awardTaskCompletionCoins(session.user.id, taskId).catch(() => 0);
 		revalidatePath("/dashboard/home");
-		return { sessionSeconds };
+		revalidatePath("/dashboard/profile");
+		return { sessionSeconds, coinsAwarded };
 	} catch {
 		return { error: "Could not stop the task. Try again." };
+	}
+}
+
+export async function awardTaskCoins(taskId: string): Promise<AwardTaskCoinsResult> {
+	const session = await auth.api.getSession({ headers: await headers() });
+
+	if (!session?.user) {
+		return { error: "You must be signed in to earn coins." };
+	}
+
+	try {
+		const coinsAwarded = await awardTaskCompletionCoins(session.user.id, taskId);
+		revalidatePath("/dashboard/profile");
+		return { coinsAwarded };
+	} catch {
+		return { error: "Could not record the task reward. Try again." };
 	}
 }
 

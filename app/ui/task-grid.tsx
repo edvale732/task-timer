@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { getActiveSession, startTask, stopTask } from "@/app/lib/actions";
+import type { Dispatch, SetStateAction } from "react";
+import { awardTaskCoins, getActiveSession, startTask, stopTask } from "@/app/lib/actions";
 import { formatDuration, formatNextDueDate, formatRecurrence } from "@/app/lib/functions";
 import type { TodaysTask } from "@/app/lib/types";
 import TaskRing from "@/app/ui/task-ring";
@@ -14,21 +15,40 @@ type BroadcastMessage =
   | { type: "start"; taskId: string; startedAt: string; stoppedTaskId: string | null; stoppedSessionSeconds: number | null }
   | { type: "stop"; taskId: string; completedSeconds: number };
 
+type CompletionToast = { id: string; title: string; coins: number };
+
 const POLL_INTERVAL_MS = 15_000;
 
 function elapsedSince(startedAt: string, now: number) {
   return Math.max(0, Math.floor((now - Date.parse(startedAt)) / 1000));
 }
 
+function showCompletionReward(
+  task: Pick<TodaysTask, "id" | "title">,
+  coins: number,
+  setCompletionToasts: Dispatch<SetStateAction<CompletionToast[]>>,
+) {
+  if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+    new Notification("Target reached", { body: `"${task.title}" is complete! You earned ${coins} coins.` });
+  }
+
+  setCompletionToasts((prev) => [...prev, { id: task.id, title: task.title, coins }]);
+  setTimeout(() => {
+    setCompletionToasts((prev) => prev.filter((toast) => toast.id !== task.id));
+  }, 6000);
+}
+
 export default function TaskGrid({ initialTasks }: TaskGridProps) {
   const [tasks, setTasks] = useState(initialTasks);
   const [now, setNow] = useState(() => Date.now());
   const [error, setError] = useState<string | null>(null);
-  const [completionToasts, setCompletionToasts] = useState<{ id: string; title: string; coins: number }[]>([]);
+  const [completionToasts, setCompletionToasts] = useState<CompletionToast[]>([]);
   const [isPending, startTransition] = useTransition();
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const tasksRef = useRef(tasks);
+  const pendingRewardsRef = useRef(new Set<string>());
+  const rewardRetryAfterRef = useRef(new Map<string, number>());
   // Tasks that already reached their target before/without us observing the crossing live (e.g. on page load).
   const notifiedRef = useRef(
     new Set(initialTasks.filter((task) => task.completedSeconds >= task.targetMinutes * 60).map((task) => task.id)),
@@ -49,26 +69,42 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
   useEffect(() => {
     if (!hasRunningTask) return;
 
+    async function awardCompletion(task: TodaysTask) {
+      pendingRewardsRef.current.add(task.id);
+      const result = await awardTaskCoins(task.id).catch(() => ({ error: "Could not record the task reward. Try again." }));
+      pendingRewardsRef.current.delete(task.id);
+
+      if ("error" in result) {
+        setError(result.error);
+        rewardRetryAfterRef.current.set(task.id, Date.now() + POLL_INTERVAL_MS);
+        return;
+      }
+
+      if (result.coinsAwarded === 0) {
+        rewardRetryAfterRef.current.set(task.id, Date.now() + POLL_INTERVAL_MS);
+        return;
+      }
+
+      rewardRetryAfterRef.current.delete(task.id);
+      if (notifiedRef.current.has(task.id)) return;
+
+      notifiedRef.current.add(task.id);
+      setError(null);
+      showCompletionReward(task, result.coinsAwarded, setCompletionToasts);
+    }
+
     const interval = setInterval(() => {
       const nowMs = Date.now();
       setNow(nowMs);
 
       for (const task of tasksRef.current) {
-        if (!task.isRunning || !task.startedAt || notifiedRef.current.has(task.id)) continue;
+        if (!task.isRunning || !task.startedAt || notifiedRef.current.has(task.id) || pendingRewardsRef.current.has(task.id)) continue;
+        if ((rewardRetryAfterRef.current.get(task.id) ?? 0) > nowMs) continue;
 
         const liveSeconds = task.completedSeconds + elapsedSince(task.startedAt, nowMs);
         if (liveSeconds < task.targetMinutes * 60) continue;
 
-        notifiedRef.current.add(task.id);
-
-        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-          new Notification("Target reached", { body: `"${task.title}" is complete! You earned ${task.targetMinutes} coins.` });
-        }
-
-        setCompletionToasts((prev) => [...prev, { id: task.id, title: task.title, coins: task.targetMinutes }]);
-        setTimeout(() => {
-          setCompletionToasts((prev) => prev.filter((toast) => toast.id !== task.id));
-        }, 6000);
+        void awardCompletion(task);
       }
     }, 1000);
 
@@ -169,6 +205,11 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
         return;
       }
 
+      if (result.stoppedTaskCoinsAwarded > 0 && result.stoppedTaskId === previouslyRunning?.id && previouslyRunning && !notifiedRef.current.has(previouslyRunning.id)) {
+        notifiedRef.current.add(previouslyRunning.id);
+        showCompletionReward(previouslyRunning, result.stoppedTaskCoinsAwarded, setCompletionToasts);
+      }
+
       setTasks((prev) =>
         prev.map((task) => {
           if (task.id === taskId) return { ...task, startedAt: result.startedAt };
@@ -212,6 +253,11 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
       }
 
       const completedSeconds = baseCompletedSeconds + result.sessionSeconds;
+
+      if (result.coinsAwarded > 0 && task && !notifiedRef.current.has(taskId)) {
+        notifiedRef.current.add(taskId);
+        showCompletionReward(task, result.coinsAwarded, setCompletionToasts);
+      }
 
       setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, completedSeconds } : t)));
 

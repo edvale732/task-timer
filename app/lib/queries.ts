@@ -1,5 +1,5 @@
 import { Pool } from "@neondatabase/serverless";
-import type { ActiveSessionSnapshot, CalendarTask, CreateTaskInput, TodaysTask } from "@/app/lib/types";
+import type { ActiveSessionSnapshot, CalendarTask, CoinTransaction, CreateTaskInput, TodaysTask } from "@/app/lib/types";
 
 const pool = new Pool({
 	connectionString: process.env.DATABASE_URL,
@@ -145,53 +145,106 @@ export async function getTotalFocusedSeconds(userId: string): Promise<number> {
 
 export async function getCoinBalance(userId: string): Promise<number> {
 	const result = await pool.query<{ coinBalance: number | string }>(
-		`WITH daily_focus AS (
-			SELECT
-				"task_id",
-				"user_id",
-				"started_at"::date AS "focusDate",
-				SUM(COALESCE(
-					"duration_seconds",
-					GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - "started_at"))))::integer
-				)) AS "focusedSeconds"
-			FROM "task_session"
-			WHERE "user_id" = $1
-			GROUP BY "task_id", "user_id", "started_at"::date
-		)
-		SELECT COALESCE(SUM(t."target_minutes"), 0)::bigint AS "coinBalance"
-		FROM daily_focus df
-		JOIN "task" t
-			ON t."id" = df."task_id"
-			AND t."user_id" = df."user_id"
-		WHERE df."focusedSeconds" >= t."target_minutes" * 60
-			AND (
-				(t."recurrence_type" = 'once' AND df."focusDate" = t."recurrence_start_date")
-				OR (
-					t."recurrence_type" = 'recurring'
-					AND df."focusDate" >= t."recurrence_start_date"
-					AND (
-						(t."recurrence_unit" = 'day' AND MOD(df."focusDate" - t."recurrence_start_date", t."recurrence_interval") = 0)
-						OR (t."recurrence_unit" = 'week' AND MOD(df."focusDate" - t."recurrence_start_date", t."recurrence_interval" * 7) = 0)
-						OR (
-							t."recurrence_unit" = 'month'
-							AND MOD(((DATE_PART('year', df."focusDate") - DATE_PART('year', t."recurrence_start_date")) * 12 + DATE_PART('month', df."focusDate") - DATE_PART('month', t."recurrence_start_date"))::integer, t."recurrence_interval") = 0
-							AND (
-								DATE_PART('day', df."focusDate") = DATE_PART('day', t."recurrence_start_date")
-								OR (
-									t."monthly_overflow_behavior" = 'last_day_of_month'
-									AND DATE_PART('day', df."focusDate") = DATE_PART('day', DATE_TRUNC('month', df."focusDate") + INTERVAL '1 month - 1 day')
-									AND DATE_PART('day', t."recurrence_start_date") > DATE_PART('day', DATE_TRUNC('month', df."focusDate") + INTERVAL '1 month - 1 day')
-								)
+		`SELECT COALESCE(SUM("amount"), 0)::bigint AS "coinBalance"
+		FROM "coin_transaction"
+		WHERE "user_id" = $1`,
+		[userId],
+	);
+
+	return Number(result.rows[0]?.coinBalance ?? 0);
+}
+
+export async function getCoinTransactions(userId: string, limit = 50): Promise<CoinTransaction[]> {
+	const result = await pool.query<CoinTransaction>(
+		`SELECT
+			"id"::text AS "id",
+			"task_title" AS "taskTitle",
+			"amount" AS "amount",
+			"completed_on"::text AS "completedOn"
+		FROM "coin_transaction"
+		WHERE "user_id" = $1
+		ORDER BY "completed_on" DESC, "id" DESC
+		LIMIT $2`,
+		[userId, limit],
+	);
+
+	return result.rows.map((transaction) => ({
+		...transaction,
+		amount: Number(transaction.amount),
+	}));
+}
+
+const INSERT_TODAYS_COIN_TRANSACTIONS = `
+	WITH daily_focus AS (
+		SELECT
+			ts."task_id",
+			ts."user_id",
+			ts."started_at"::date AS "focusDate",
+			SUM(COALESCE(
+				ts."duration_seconds",
+				GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - ts."started_at"))))::integer
+			)) AS "focusedSeconds"
+		FROM "task_session" ts
+		WHERE ts."user_id" = $1
+			AND ts."started_at"::date = CURRENT_DATE
+		GROUP BY ts."task_id", ts."user_id", ts."started_at"::date
+	)
+	INSERT INTO "coin_transaction" (
+		"user_id",
+		"task_id",
+		"task_title",
+		"completed_on",
+		"amount"
+	)
+	SELECT t."user_id"::text, t."id"::text, t."title", df."focusDate", t."target_minutes"
+	FROM daily_focus df
+	JOIN "task" t
+		ON t."id" = df."task_id"
+		AND t."user_id" = df."user_id"
+	WHERE df."focusedSeconds" >= t."target_minutes" * 60
+		AND ($2::text IS NULL OR t."id"::text = $2)
+		AND (
+			(t."recurrence_type" = 'once' AND df."focusDate" = t."recurrence_start_date")
+			OR (
+				t."recurrence_type" = 'recurring'
+				AND df."focusDate" >= t."recurrence_start_date"
+				AND (
+					(t."recurrence_unit" = 'day' AND MOD(df."focusDate" - t."recurrence_start_date", t."recurrence_interval") = 0)
+					OR (t."recurrence_unit" = 'week' AND MOD(df."focusDate" - t."recurrence_start_date", t."recurrence_interval" * 7) = 0)
+					OR (
+						t."recurrence_unit" = 'month'
+						AND MOD(((DATE_PART('year', df."focusDate") - DATE_PART('year', t."recurrence_start_date")) * 12 + DATE_PART('month', df."focusDate") - DATE_PART('month', t."recurrence_start_date"))::integer, t."recurrence_interval") = 0
+						AND (
+							DATE_PART('day', df."focusDate") = DATE_PART('day', t."recurrence_start_date")
+							OR (
+								t."monthly_overflow_behavior" = 'last_day_of_month'
+								AND DATE_PART('day', df."focusDate") = DATE_PART('day', DATE_TRUNC('month', df."focusDate") + INTERVAL '1 month - 1 day')
+								AND DATE_PART('day', t."recurrence_start_date") > DATE_PART('day', DATE_TRUNC('month', df."focusDate") + INTERVAL '1 month - 1 day')
 							)
 						)
 					)
 				)
 			)
-		`,
-		[userId],
-	);
+		)
+	ON CONFLICT ("user_id", "task_id", "completed_on") DO NOTHING
+	RETURNING "amount"
+`;
 
-	return Number(result.rows[0]?.coinBalance ?? 0);
+export async function recordTodaysCoinTransactions(userId: string): Promise<void> {
+	await pool.query(INSERT_TODAYS_COIN_TRANSACTIONS, [userId, null]);
+}
+
+export async function awardTaskCompletionCoins(userId: string, taskId: string): Promise<number> {
+	const result = await pool.query<{ amount: number }>(INSERT_TODAYS_COIN_TRANSACTIONS, [userId, taskId]);
+	if (result.rows[0]) return Number(result.rows[0].amount);
+
+	const existing = await pool.query<{ amount: number }>(
+		`SELECT "amount"
+		FROM "coin_transaction"
+		WHERE "user_id" = $1 AND "task_id" = $2 AND "completed_on" = CURRENT_DATE`,
+		[userId, taskId],
+	);
+	return Number(existing.rows[0]?.amount ?? 0);
 }
 
 export type StartedSession = {
