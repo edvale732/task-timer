@@ -76,8 +76,8 @@ export default function CalendarView({ tasks, view }: CalendarViewProps) {
     <section aria-label={`${view} task calendar`}>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#909090]">Schedule</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">
+          <p className="text-sm font-medium uppercase tracking-[0.18em] text-text-subtle">Schedule</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
             {formatPeriodTitle(days, view)}
           </h1>
         </div>
@@ -85,7 +85,7 @@ export default function CalendarView({ tasks, view }: CalendarViewProps) {
           <button
             type="button"
             onClick={() => setAnchor((current) => shiftPeriod(current, view, -1))}
-            className="rounded-lg border border-[#4a4a4a] px-3 py-2 text-sm font-medium text-[#ededed] transition-colors hover:bg-[#333333]"
+            className="rounded-lg border border-border-control px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
           >
             Previous
           </button>
@@ -95,21 +95,21 @@ export default function CalendarView({ tasks, view }: CalendarViewProps) {
               const now = new Date();
               return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
             })}
-            className="rounded-lg border border-[#4a4a4a] px-3 py-2 text-sm font-medium text-[#ededed] transition-colors hover:bg-[#333333]"
+            className="rounded-lg border border-border-control px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
           >
             Today
           </button>
           <button
             type="button"
             onClick={() => setAnchor((current) => shiftPeriod(current, view, 1))}
-            className="rounded-lg border border-[#4a4a4a] px-3 py-2 text-sm font-medium text-[#ededed] transition-colors hover:bg-[#333333]"
+            className="rounded-lg border border-border-control px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
           >
             Next
           </button>
         </div>
       </div>
 
-      <div className={`grid overflow-hidden rounded-2xl border border-[#383838] bg-[#242424] ${view === "week" ? "grid-cols-7" : "grid-cols-7"}`}>
+      <div className={`grid overflow-hidden rounded-2xl border border-border bg-surface ${view === "week" ? "grid-cols-7" : "grid-cols-7"}`}>
         {days.map((day, index) => {
           const key = dateKey(day);
           const isToday = key === todayKey;
@@ -120,30 +120,30 @@ export default function CalendarView({ tasks, view }: CalendarViewProps) {
             <div
               key={key}
               style={view === "month" && index === 0 ? { gridColumnStart: ((day.getUTCDay() + 6) % 7) + 1 } : undefined}
-              className={`min-h-36 border-b border-r border-[#383838] p-3 last:border-r-0 ${view === "month" && !isCurrentMonth ? "bg-[#1e1e1e] text-[#666666]" : ""} ${isToday ? "bg-[#2c302d]" : ""}`}
+              className={`min-h-36 border-b border-r border-border p-3 last:border-r-0 ${view === "month" && !isCurrentMonth ? "bg-surface-muted text-text-disabled" : ""} ${isToday ? "bg-today-surface" : ""}`}
             >
               <div className="mb-3 flex items-start justify-between gap-2">
                 <div>
-                  <p className={`text-xs font-medium uppercase tracking-[0.12em] ${isToday ? "text-[#b9d8bd]" : "text-[#909090]"}`}>
+                  <p className={`text-xs font-medium uppercase tracking-[0.12em] ${isToday ? "text-success-muted" : "text-text-subtle"}`}>
                     {dayFormatter.format(day)}
                   </p>
-                  <p className={`mt-1 text-lg font-semibold ${isToday ? "text-white" : "text-[#d5d5d5]"}`}>
+                  <p className={`mt-1 text-lg font-semibold ${isToday ? "text-foreground" : "text-text-tertiary"}`}>
                     {day.getUTCDate()}
                   </p>
                 </div>
-                {isToday && <span className="rounded-full bg-[#49654e] px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#d9f0dc]">Today</span>}
+                {isToday && <span className="rounded-full bg-success-border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-success-foreground">Today</span>}
               </div>
               <div className="space-y-2">
                 {dueTasks.map((task) => (
-                  <div key={task.id} className="border-l-2 border-[#b9d8bd] pl-2">
-                    <p className="truncate text-sm font-medium text-[#ededed]" title={task.title}>{task.title}</p>
-                    <p className="mt-0.5 text-xs text-[#909090]">
+                  <div key={task.id} className="border-l-2 border-success-muted pl-2">
+                    <p className="truncate text-sm font-medium text-foreground" title={task.title}>{task.title}</p>
+                    <p className="mt-0.5 text-xs text-text-subtle">
                       {task.recurrenceType === "once" ? "One-time" : "Repeating"}
                     </p>
                   </div>
                 ))}
                 {dueTasks.length === 0 && (
-                  <p className="text-xs text-[#666666]">No tasks due</p>
+                  <p className="text-xs text-text-disabled">No tasks due</p>
                 )}
               </div>
             </div>

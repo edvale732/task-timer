@@ -17,7 +17,7 @@ export default function CalendarLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-        <nav aria-label="Schedule views" className="inline-flex rounded-xl border border-[#383838] bg-[#242424] p-1">
+        <nav aria-label="Schedule views" className="inline-flex rounded-xl border border-border bg-surface p-1">
           {views.map((view) => {
             const isActive = pathname === view.href;
 
@@ -26,7 +26,7 @@ export default function CalendarLayout({ children }: { children: ReactNode }) {
                 key={view.href}
                 href={view.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${isActive ? "bg-[#d1d1d1] text-[#1b1b1b]" : "text-[#a5a5a5] hover:bg-[#333333] hover:text-white"}`}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${isActive ? "bg-action text-action-foreground" : "text-text-muted hover:bg-surface-hover hover:text-foreground"}`}
               >
                 {view.label}
               </Link>
@@ -35,7 +35,7 @@ export default function CalendarLayout({ children }: { children: ReactNode }) {
         </nav>
         <Link
           href="/dashboard/create"
-          className="inline-flex shrink-0 items-center gap-2 rounded-md bg-[#d1d1d1] px-4 py-2 text-sm font-semibold text-[#1b1b1b] transition hover:bg-white"
+          className="inline-flex shrink-0 items-center gap-2 rounded-md bg-action px-4 py-2 text-sm font-semibold text-action-foreground transition hover:bg-action-hover"
         >
           <Plus className="size-4" aria-hidden="true" />
           Create task

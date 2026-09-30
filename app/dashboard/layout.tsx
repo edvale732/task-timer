@@ -14,8 +14,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 	}
 
 	return (
-		<div className="min-h-screen bg-[#1b1b1b] text-[#ededed]">
-			<header className="border-b border-[#383838] bg-[#242424]">
+		<div className="min-h-screen bg-background text-foreground">
+			<header className="border-b border-border bg-surface">
 				<DashboardNavigation coinBalance={coinBalance} />
 			</header>
 			<main className="mx-auto w-full max-w-6xl px-6 py-8">{children}</main>

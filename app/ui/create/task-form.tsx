@@ -5,7 +5,7 @@ import Form from "next/form";
 import { createTask } from "@/app/lib/actions";
 import type { CreateTaskState } from "@/app/lib/types";
 
-const fieldClassName = "mt-2 w-full rounded-xl border border-[#555555] bg-[#1b1b1b] px-4 py-3 text-[#ededed] outline-none transition placeholder:text-[#707070] focus:border-[#d1d1d1]";
+const fieldClassName = "mt-2 w-full rounded-xl border border-border-strong bg-background px-4 py-3 text-foreground outline-none transition placeholder:text-text-placeholder focus:border-action";
 const initialCreateTaskState: CreateTaskState = { message: "" };
 
 export default function TaskForm() {
@@ -72,14 +72,14 @@ export default function TaskForm() {
   }, initialCreateTaskState);
 
   return (
-    <Form action={formAction} className="relative rounded-2xl border border-[#383838] bg-[#242424] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.2)] sm:p-8">
+    <Form action={formAction} className="relative rounded-2xl border border-border bg-surface p-6 shadow-form sm:p-8">
       {state.message && state.error && (
-        <p role="status" aria-live="polite" className={`mb-6 rounded-xl border px-4 py-3 text-sm ${state.error ? "border-[#704747] bg-[#3a2525] text-[#e5aaaa]" : "border-[#49654e] bg-[#26362a] text-[#b9d8bd]"}`}>
+        <p role="status" aria-live="polite" className={`mb-6 rounded-xl border px-4 py-3 text-sm ${state.error ? "border-error-border bg-error-bg text-error-text" : "border-success-border bg-success-bg text-success-text"}`}>
           {state.message}
         </p>
       )}
       <div className="space-y-6">
-        <label className="block text-sm font-semibold text-[#ededed]">
+        <label className="block text-sm font-semibold text-foreground">
           Task name
           <input
             required
@@ -92,8 +92,8 @@ export default function TaskForm() {
           />
         </label>
 
-        <label className="block text-sm font-semibold text-[#ededed]">
-          Description <span className="font-normal text-[#909090]">(optional)</span>
+        <label className="block text-sm font-semibold text-foreground">
+          Description <span className="font-normal text-text-subtle">(optional)</span>
           <textarea
             name="description"
             value={description}
@@ -105,7 +105,7 @@ export default function TaskForm() {
         </label>
 
         <div className="grid gap-6 sm:grid-cols-2">
-          <label className="block text-sm font-semibold text-[#ededed]">
+          <label className="block text-sm font-semibold text-foreground">
             Target minutes
             <input
               required
@@ -118,7 +118,7 @@ export default function TaskForm() {
             />
           </label>
 
-          <label className="block text-sm font-semibold text-[#ededed]">
+          <label className="block text-sm font-semibold text-foreground">
             Recurrence
             <select name="recurrence_type" value={recurrenceType} onChange={(event) => setRecurrenceType(event.target.value as "once" | "recurring")} className={`${fieldClassName} h-12`}>
               <option value="once">Does not repeat</option>
@@ -130,7 +130,7 @@ export default function TaskForm() {
         {recurrenceType === "recurring" && (
           <>
             <div className="grid items-start gap-6 sm:grid-cols-2">
-              <label className="grid grid-rows-[1.25rem_3rem] gap-2 text-sm font-semibold text-[#ededed]">
+              <label className="grid grid-rows-[1.25rem_3rem] gap-2 text-sm font-semibold text-foreground">
                 Repeat every
                 <div className="grid h-12 min-w-0 grid-cols-2 gap-3">
                   <input required={recurrenceType === "recurring"} min="1" type="number" name="recurrence_interval" value={recurrenceInterval} onChange={(event) => setRecurrenceInterval(event.target.value)} className={`${fieldClassName} mt-0 h-full min-w-0 flex-1`} />
@@ -142,7 +142,7 @@ export default function TaskForm() {
                 </div>
               </label>
 
-              <label className="grid grid-rows-[1.25rem_3rem] gap-2 text-sm font-semibold text-[#ededed]">
+              <label className="grid grid-rows-[1.25rem_3rem] gap-2 text-sm font-semibold text-foreground">
                 Recurrence start date
                 <input required name="recurrence_start_date" type="date" value={recurrenceStartDate} onChange={(event) => setRecurrenceStartDate(event.target.value)} className={`${fieldClassName} mt-0 h-12`} />
               </label>
@@ -152,15 +152,15 @@ export default function TaskForm() {
 
       </div>
 
-      <div className="mt-8 flex flex-col gap-4 border-t border-[#383838] pt-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-8 flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
         {successMessage ? (
-          <div role="status" aria-live="polite" className={`rounded-xl border border-[#49654e] bg-[#26362a] px-4 py-3 text-sm text-[#b9d8bd] shadow-[0_12px_32px_rgba(0,0,0,0.35)] transition-opacity duration-1000 ${successSeconds <= 1 ? "opacity-0" : "opacity-100"}`}>
+          <div role="status" aria-live="polite" className={`rounded-xl border border-success-border bg-success-bg px-4 py-3 text-sm text-success-text shadow-toast transition-opacity duration-1000 ${successSeconds <= 1 ? "opacity-0" : "opacity-100"}`}>
             {successMessage}
           </div>
         ) : (
           <span aria-hidden="true" />
         )}
-        <button type="submit" disabled={isPending} className="rounded-xl bg-[#d1d1d1] px-5 py-3 font-semibold text-[#1b1b1b] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d1d1d1] focus:ring-offset-2 focus:ring-offset-[#242424] disabled:cursor-wait disabled:opacity-60">
+        <button type="submit" disabled={isPending} className="rounded-xl bg-action px-5 py-3 font-semibold text-action-foreground transition hover:bg-action-hover focus:outline-none focus:ring-2 focus:ring-action focus:ring-offset-2 focus:ring-offset-surface disabled:cursor-wait disabled:opacity-60">
           {isPending ? "Creating..." : "Create task"}
         </button>
       </div>
