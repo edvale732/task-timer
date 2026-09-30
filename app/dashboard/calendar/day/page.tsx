@@ -21,18 +21,18 @@ export default async function Page() {
     <section>
       <div className="mb-10 flex items-end justify-between gap-6">
         <div>
-          <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#909090]">Today</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white">Your focus, in circles.</h1>
+          <p className="text-sm font-medium uppercase tracking-[0.18em] text-text-subtle">Today</p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-foreground">Your focus, in circles.</h1>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <p className="hidden text-right text-sm text-[#909090] sm:block">{tasks.length} {tasks.length === 1 ? "task" : "tasks"} on the docket</p>
+          <p className="hidden text-right text-sm text-text-subtle sm:block">{tasks.length} {tasks.length === 1 ? "task" : "tasks"} on the docket</p>
         </div>
       </div>
 
       {tasks.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[#4a4a4a] bg-[#242424] px-6 py-16 text-center">
-          <h2 className="text-xl font-semibold text-white">Nothing scheduled today</h2>
-          <p className="mt-2 text-[#a5a5a5]">Create a task and it will appear here when it is due.</p>
+        <div className="rounded-2xl border border-dashed border-border-control bg-surface px-6 py-16 text-center">
+          <h2 className="text-xl font-semibold text-foreground">Nothing scheduled today</h2>
+          <p className="mt-2 text-text-muted">Create a task and it will appear here when it is due.</p>
         </div>
       ) : (
         <TaskGrid initialTasks={tasks} />

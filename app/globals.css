@@ -3,11 +3,87 @@
 :root {
   --background: #1b1b1b;
   --foreground: #ededed;
+  --surface: #242424;
+  --surface-muted: #1e1e1e;
+  --surface-hover: #303030;
+  --surface-active: #3b3b3b;
+  --border: #383838;
+  --border-control: #4a4a4a;
+  --border-strong: #555555;
+  --border-hover: #5a5a5a;
+  --text-muted: #a5a5a5;
+  --text-subtle: #909090;
+  --text-secondary: #c5c5c5;
+  --text-tertiary: #d5d5d5;
+  --text-disabled: #666666;
+  --text-placeholder: #707070;
+  --action: #d1d1d1;
+  --action-hover: #ffffff;
+  --action-foreground: #1b1b1b;
+  --today-surface: #2c302d;
+  --success: #4ade80;
+  --success-bg: #26362a;
+  --success-border: #49654e;
+  --success-text: #b9d8bd;
+  --success-foreground: #d9f0dc;
+  --success-muted: #b9d8bd;
+  --error: #f0a5a5;
+  --error-bg: #3a2525;
+  --error-border: #704747;
+  --error-text: #e5aaaa;
+  --reward: #facc15;
+  --reward-border: #eab308;
+  --reward-bg: #713f12;
+  --reward-text: #fde68a;
+  --overlay: rgb(0 0 0 / 90%);
+  --shadow-value-auth: 0 24px 80px rgb(0 0 0 / 40%);
+  --shadow-value-card: 0 16px 45px rgb(0 0 0 / 18%);
+  --shadow-value-form: 0 20px 60px rgb(0 0 0 / 20%);
+  --shadow-value-toast: 0 12px 32px rgb(0 0 0 / 35%);
+  --progress-track: #3b3b3b;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
+  --color-border: var(--border);
+  --color-border-control: var(--border-control);
+  --color-border-strong: var(--border-strong);
+  --color-border-hover: var(--border-hover);
+  --color-text-muted: var(--text-muted);
+  --color-text-subtle: var(--text-subtle);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-placeholder: var(--text-placeholder);
+  --color-action: var(--action);
+  --color-action-hover: var(--action-hover);
+  --color-action-foreground: var(--action-foreground);
+  --color-today-surface: var(--today-surface);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-success-border: var(--success-border);
+  --color-success-text: var(--success-text);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-muted: var(--success-muted);
+  --color-error: var(--error);
+  --color-error-bg: var(--error-bg);
+  --color-error-border: var(--error-border);
+  --color-error-text: var(--error-text);
+  --color-reward: var(--reward);
+  --color-reward-border: var(--reward-border);
+  --color-reward-bg: var(--reward-bg);
+  --color-reward-text: var(--reward-text);
+  --color-overlay: var(--overlay);
+  --shadow-auth: var(--shadow-value-auth);
+  --shadow-card: var(--shadow-value-card);
+  --shadow-form: var(--shadow-value-form);
+  --shadow-toast: var(--shadow-value-toast);
+  --color-progress-track: var(--progress-track);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -15,5 +91,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), sans-serif;
 }

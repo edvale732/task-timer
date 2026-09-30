@@ -36,11 +36,11 @@ export default function SignOutButton() {
         type="button"
         onClick={handleSignOut}
         disabled={isSigningOut}
-        className="rounded-md border border-[#555555] px-4 py-2 text-sm font-semibold text-[#ededed] transition hover:border-[#909090] hover:bg-[#303030] disabled:cursor-wait disabled:opacity-60"
+        className="rounded-md border border-border-strong px-4 py-2 text-sm font-semibold text-foreground transition hover:border-text-subtle hover:bg-surface-hover disabled:cursor-wait disabled:opacity-60"
       >
         {isSigningOut ? "Signing out..." : "Log out"}
       </button>
-      {errorMessage && <p role="alert" className="text-sm text-[#f0a5a5]">{errorMessage}</p>}
+      {errorMessage && <p role="alert" className="text-sm text-error">{errorMessage}</p>}
     </>
   );
 }

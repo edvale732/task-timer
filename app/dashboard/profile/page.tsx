@@ -15,9 +15,9 @@ export default async function Page() {
   if (!session?.user) {
     return (
       <section className="mx-auto max-w-2xl">
-        <h1 className="text-3xl font-semibold tracking-tight text-white">Profile</h1>
-        <p className="mt-3 text-[#a5a5a5]">No signed-in account was found.</p>
-        <Link href="/" className="mt-5 inline-flex rounded-md bg-[#d1d1d1] px-4 py-2 text-sm font-semibold text-[#1b1b1b] transition hover:bg-white">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Profile</h1>
+        <p className="mt-3 text-text-muted">No signed-in account was found.</p>
+        <Link href="/" className="mt-5 inline-flex rounded-md bg-action px-4 py-2 text-sm font-semibold text-action-foreground transition hover:bg-action-hover">
           Go to sign in
         </Link>
       </section>
@@ -46,29 +46,29 @@ export default async function Page() {
   return (
     <section className="mx-auto max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-white">Profile</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Profile</h1>
       </div>
-      <div className="divide-y divide-[#383838] rounded-xl border border-[#383838] bg-[#242424]">
+      <div className="divide-y divide-border rounded-xl border border-border bg-surface">
         <dl className="grid gap-6 p-6 sm:grid-cols-2">
           <div>
-            <dt className="text-sm font-medium text-[#909090]">Name</dt>
-            <dd className="mt-2 break-words text-[#ededed]">{name || "Not provided"}</dd>
+            <dt className="text-sm font-medium text-text-subtle">Name</dt>
+            <dd className="mt-2 break-words text-foreground">{name || "Not provided"}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-[#909090]">Email</dt>
-            <dd className="mt-2 break-words text-[#ededed]">{email}</dd>
+            <dt className="text-sm font-medium text-text-subtle">Email</dt>
+            <dd className="mt-2 break-words text-foreground">{email}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-[#909090]">Member since</dt>
-            <dd className="mt-2 text-[#ededed]">{memberSince}</dd>
+            <dt className="text-sm font-medium text-text-subtle">Member since</dt>
+            <dd className="mt-2 text-foreground">{memberSince}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-[#909090]">Total time focused</dt>
-            <dd className="mt-2 text-[#ededed]">{totalFocusedTime}</dd>
+            <dt className="text-sm font-medium text-text-subtle">Total time focused</dt>
+            <dd className="mt-2 text-foreground">{totalFocusedTime}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-[#909090]">Coins</dt>
-            <dd className="mt-2 text-[#ededed]">{coinBalance.toLocaleString("en-US")}</dd>
+            <dt className="text-sm font-medium text-text-subtle">Coins</dt>
+            <dd className="mt-2 text-foreground">{coinBalance.toLocaleString("en-US")}</dd>
           </div>
         </dl>
         <div className="flex flex-col items-start gap-3 p-6">
@@ -78,14 +78,14 @@ export default async function Page() {
       <section className="mt-10">
         <h2 className="text-xl font-semibold text-white">Coin transaction history</h2>
         {coinTransactions.length === 0 ? (
-          <p className="mt-4 text-sm text-[#a5a5a5]">No coin transactions yet.</p>
+          <p className="mt-4 text-sm text-text-muted">No coin transactions yet.</p>
         ) : (
-          <ol className="mt-4 divide-y divide-[#383838] border-y border-[#383838]">
+          <ol className="mt-4 divide-y divide-border border-y border-border">
             {coinTransactions.map((transaction) => (
               <li key={transaction.id} className="flex items-center justify-between gap-4 py-4">
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-[#ededed]">{transaction.taskTitle}</p>
-                  <p className="mt-1 text-sm text-[#909090]">
+                  <p className="truncate font-medium text-foreground">{transaction.taskTitle}</p>
+                  <p className="mt-1 text-sm text-text-subtle">
                     {new Intl.DateTimeFormat("en-US", {
                       year: "numeric",
                       month: "short",
@@ -94,7 +94,7 @@ export default async function Page() {
                     }).format(new Date(`${transaction.completedOn}T00:00:00Z`))}
                   </p>
                 </div>
-                <p className="shrink-0 font-semibold text-[#ededed]">+{transaction.amount} coins</p>
+                <p className="shrink-0 font-semibold text-foreground">+{transaction.amount} coins</p>
               </li>
             ))}
           </ol>

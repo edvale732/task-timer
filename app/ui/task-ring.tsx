@@ -14,13 +14,13 @@ export default function TaskRing({ progress, active, size = 112 }: TaskRingProps
       aria-label={`${Math.round(progress * 100)} percent complete`}
     >
       <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100" role="img">
-        <circle cx="50" cy="50" r={radius} fill="none" stroke="#3b3b3b" strokeWidth="7" />
+        <circle cx="50" cy="50" r={radius} fill="none" stroke="var(--progress-track)" strokeWidth="7" />
         <circle
           cx="50"
           cy="50"
           r={radius}
           fill="none"
-          stroke={isComplete ? "#facc15" : active ? "#4ade80" : "#d1d1d1"}
+          stroke={isComplete ? "var(--reward)" : active ? "var(--success)" : "var(--action)"}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"

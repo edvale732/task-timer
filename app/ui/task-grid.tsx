@@ -285,11 +285,11 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
 
   return (
     <div>
-      {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
+      {error && <p className="mb-4 text-sm text-error">{error}</p>}
       {completionToasts.length > 0 && (
         <div className="mb-4 space-y-2">
           {completionToasts.map((toast) => (
-            <p key={toast.id} className="rounded-lg border border-amber-700 bg-amber-950/40 px-4 py-2 text-sm text-amber-300">
+            <p key={toast.id} className="rounded-lg border border-reward-border bg-reward-bg px-4 py-2 text-sm text-reward-text">
               🎉 &ldquo;{toast.title}&rdquo; is complete! You earned {toast.coins} {toast.coins === 1 ? "coin" : "coins"}.
             </p>
           ))}
@@ -307,18 +307,18 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
             <article
               key={task.id}
               onClick={() => setFocusedTaskId(task.id)}
-              className="flex cursor-pointer items-center gap-5 rounded-2xl border border-[#383838] bg-[#242424] p-5 shadow-[0_16px_45px_rgba(0,0,0,0.18)] transition-colors hover:border-[#5a5a5a]"
+              className="flex cursor-pointer items-center gap-5 rounded-2xl border border-border bg-surface p-5 shadow-card transition-colors hover:border-border-hover"
             >
               <TaskRing progress={progress} active={task.isRunning} />
               <div className="min-w-0 flex-1">
-                <h2 className="truncate text-lg font-semibold text-white">{task.title}</h2>
-                <p className="mt-1 text-xs text-[#909090]">
+                <h2 className="truncate text-lg font-semibold text-foreground">{task.title}</h2>
+                <p className="mt-1 text-xs text-text-subtle">
                   {formatRecurrence(task.recurrenceType, task.recurrenceInterval, task.recurrenceUnit)}
                 </p>
-                <p className="mt-1 text-xs text-[#909090]">
+                <p className="mt-1 text-xs text-text-subtle">
                   {formatNextDueDate(task.recurrenceStartDate, task.recurrenceType, task.recurrenceInterval, task.recurrenceUnit, task.monthlyOverflowBehavior)}
                 </p>
-                <p className="mt-2 text-sm text-[#a5a5a5]">
+                <p className="mt-2 text-sm text-text-muted">
                   {formatDuration(liveSeconds)} / {formatDuration(targetSeconds)}
                 </p>
                 <button
@@ -332,7 +332,7 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
                       handleStart(task.id);
                     }
                   }}
-                  className="mt-3 rounded-lg border border-[#4a4a4a] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="mt-3 rounded-lg border border-border-control px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {task.isRunning ? "Stop" : "Start"}
                 </button>
@@ -343,28 +343,28 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
       </div>
       {focusedTask && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-black/90 px-6 py-10 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-overlay px-6 py-10 backdrop-blur-sm"
           onClick={() => setFocusedTaskId(null)}
         >
           <button
             type="button"
             onClick={() => setFocusedTaskId(null)}
-            className="absolute right-6 top-6 rounded-lg border border-[#4a4a4a] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#333333]"
+            className="absolute right-6 top-6 rounded-lg border border-border-control px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
           >
             Close
           </button>
           <div className="flex max-w-lg flex-col items-center gap-6 text-center" onClick={(event) => event.stopPropagation()}>
             <TaskRing progress={focusedProgress} active={focusedTask.isRunning} size={280} />
             <div>
-              <h2 className="text-3xl font-semibold text-white">{focusedTask.title}</h2>
-              {focusedTask.description && <p className="mt-3 text-base text-[#c5c5c5]">{focusedTask.description}</p>}
-              <p className="mt-3 text-sm text-[#909090]">
+              <h2 className="text-3xl font-semibold text-foreground">{focusedTask.title}</h2>
+              {focusedTask.description && <p className="mt-3 text-base text-text-secondary">{focusedTask.description}</p>}
+              <p className="mt-3 text-sm text-text-subtle">
                 {formatRecurrence(focusedTask.recurrenceType, focusedTask.recurrenceInterval, focusedTask.recurrenceUnit)}
               </p>
-              <p className="mt-1 text-sm text-[#909090]">
+              <p className="mt-1 text-sm text-text-subtle">
                 {formatNextDueDate(focusedTask.recurrenceStartDate, focusedTask.recurrenceType, focusedTask.recurrenceInterval, focusedTask.recurrenceUnit, focusedTask.monthlyOverflowBehavior)}
               </p>
-              <p className="mt-4 text-lg text-[#a5a5a5]">
+              <p className="mt-4 text-lg text-text-muted">
                 {formatDuration(focusedLiveSeconds)} / {formatDuration(focusedTargetSeconds)}
               </p>
             </div>
@@ -372,7 +372,7 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
               type="button"
               disabled={isPending}
               onClick={() => (focusedTask.isRunning ? handleStop(focusedTask.id) : handleStart(focusedTask.id))}
-              className="rounded-lg border border-[#4a4a4a] px-8 py-3 text-lg font-medium text-white transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg border border-border-control px-8 py-3 text-lg font-medium text-foreground transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {focusedTask.isRunning ? "Stop" : "Start"}
             </button>
