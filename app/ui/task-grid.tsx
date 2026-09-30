@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { Dispatch, SetStateAction } from "react";
+import { useRouter } from "next/navigation";
 import { awardTaskCoins, getActiveSession, startTask, stopTask } from "@/app/lib/actions";
 import { formatDuration, formatNextDueDate, formatRecurrence } from "@/app/lib/functions";
 import type { TodaysTask } from "@/app/lib/types";
@@ -39,6 +40,7 @@ function showCompletionReward(
 }
 
 export default function TaskGrid({ initialTasks }: TaskGridProps) {
+  const router = useRouter();
   const [tasks, setTasks] = useState(initialTasks);
   const [now, setNow] = useState(() => Date.now());
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +92,7 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
 
       notifiedRef.current.add(task.id);
       setError(null);
+      router.refresh();
       showCompletionReward(task, result.coinsAwarded, setCompletionToasts);
     }
 
@@ -109,7 +112,7 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [hasRunningTask]);
+  }, [hasRunningTask, router]);
 
   useEffect(() => {
     const channel = new BroadcastChannel("task-timer");
@@ -207,6 +210,7 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
 
       if (result.stoppedTaskCoinsAwarded > 0 && result.stoppedTaskId === previouslyRunning?.id && previouslyRunning && !notifiedRef.current.has(previouslyRunning.id)) {
         notifiedRef.current.add(previouslyRunning.id);
+        router.refresh();
         showCompletionReward(previouslyRunning, result.stoppedTaskCoinsAwarded, setCompletionToasts);
       }
 
@@ -256,6 +260,7 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
 
       if (result.coinsAwarded > 0 && task && !notifiedRef.current.has(taskId)) {
         notifiedRef.current.add(taskId);
+        router.refresh();
         showCompletionReward(task, result.coinsAwarded, setCompletionToasts);
       }
 

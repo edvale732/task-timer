@@ -1,43 +1,22 @@
-"use client";
-
+import { headers } from "next/headers";
 import type { ReactNode } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { auth } from "@/app/lib/auth";
+import { getCoinBalance, recordTodaysCoinTransactions } from "@/app/lib/queries";
+import DashboardNavigation from "@/app/ui/dashboard-navigation";
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
-	const pathname = usePathname();
-	const navigation = [
-		{ href: "/dashboard/calendar/day", label: "Calendar" },
-		{ href: "/dashboard/create", label: "Create" },
-		{ href: "/dashboard/profile", label: "Profile" },
-	];
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
+	const session = await auth.api.getSession({ headers: await headers() });
+	let coinBalance: number | null = null;
+
+	if (session?.user) {
+		await recordTodaysCoinTransactions(session.user.id);
+		coinBalance = await getCoinBalance(session.user.id);
+	}
 
 	return (
 		<div className="min-h-screen bg-[#1b1b1b] text-[#ededed]">
 			<header className="border-b border-[#383838] bg-[#242424]">
-				<nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4" aria-label="Dashboard navigation">
-					<Link href="/dashboard/calendar/day" className="text-lg font-semibold tracking-tight text-[#f5f5f5]">
-						TaskTimer
-					</Link>
-					<div className="flex items-center gap-2 text-sm font-medium text-[#a5a5a5]">
-						{navigation.map((item) => {
-							const isActive = item.href === "/dashboard/calendar/day"
-								? pathname.startsWith("/dashboard/calendar/")
-								: pathname === item.href;
-
-							return (
-								<Link
-									key={item.href}
-									href={item.href}
-									aria-current={isActive ? "page" : undefined}
-									className={`rounded-md px-3 py-2 transition-colors ${isActive ? "bg-[#3b3b3b] text-white" : "hover:bg-[#303030] hover:text-white"}`}
-								>
-									{item.label}
-								</Link>
-							);
-						})}
-					</div>
-				</nav>
+				<DashboardNavigation coinBalance={coinBalance} />
 			</header>
 			<main className="mx-auto w-full max-w-6xl px-6 py-8">{children}</main>
 		</div>
