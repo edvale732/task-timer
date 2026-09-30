@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CalendarDays, Plus, UserRound } from "lucide-react";
 
 type DashboardNavigationProps = {
 	coinBalance: number | null;
 };
 
 const navigation = [
-	{ href: "/dashboard/calendar/day", label: "Calendar" },
-	{ href: "/dashboard/create", label: "Create" },
-	{ href: "/dashboard/profile", label: "Profile" },
+	{ href: "/dashboard/calendar/day", label: "Calendar", Icon: CalendarDays },
+	{ href: "/dashboard/create", label: "Create", Icon: Plus },
+	{ href: "/dashboard/profile", label: "Profile", Icon: UserRound },
 ];
 
 export default function DashboardNavigation({ coinBalance }: DashboardNavigationProps) {
@@ -32,8 +33,9 @@ export default function DashboardNavigation({ coinBalance }: DashboardNavigation
 							key={item.href}
 							href={item.href}
 							aria-current={isActive ? "page" : undefined}
-							className={`rounded-md px-2 py-2 transition-colors sm:px-3 ${isActive ? "bg-[#3b3b3b] text-white" : "hover:bg-[#303030] hover:text-white"}`}
+							className={`flex items-center gap-2 rounded-md px-2 py-2 transition-colors sm:px-3 ${isActive ? "bg-[#3b3b3b] text-white" : "hover:bg-[#303030] hover:text-white"}`}
 						>
+							<item.Icon className="size-4 shrink-0" aria-hidden="true" />
 							{item.label}
 						</Link>
 					);
