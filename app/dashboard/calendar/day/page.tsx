@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { auth } from "@/app/lib/auth";
-import { getTodaysTasks } from "@/app/lib/queries";
+import { getTodaysTasks, recordTodaysCoinTransactions } from "@/app/lib/queries";
 import TaskGrid from "@/app/ui/task-grid";
 
 
@@ -12,6 +12,9 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   const session = await auth.api.getSession({ headers: await headers() });
+  if (session?.user) {
+    await recordTodaysCoinTransactions(session.user.id);
+  }
   const tasks = session?.user ? await getTodaysTasks(session.user.id) : [];
 
   return (
