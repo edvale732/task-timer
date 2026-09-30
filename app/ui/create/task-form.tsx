@@ -8,8 +8,9 @@ import type { CreateTaskState } from "@/app/lib/types";
 const fieldClassName = "mt-2 w-full rounded-xl border border-border-strong bg-background px-4 py-3 text-foreground outline-none transition placeholder:text-text-placeholder focus:border-action";
 const initialCreateTaskState: CreateTaskState = { message: "" };
 
-function getLocalDateInputValue() {
+function getLocalDateInputValue(daysFromToday = 0) {
   const today = new Date();
+  today.setDate(today.getDate() + daysFromToday);
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
@@ -136,10 +137,20 @@ export default function TaskForm() {
         </div>
 
         {recurrenceType === "once" ? (
-          <label className="block text-sm font-semibold text-foreground">
-            Task date
-            <input required name="recurrence_start_date" type="date" value={recurrenceStartDate} onChange={(event) => setRecurrenceStartDate(event.target.value)} className={`${fieldClassName} h-12`} />
-          </label>
+          <div>
+            <label htmlFor="task-date" className="block text-sm font-semibold text-foreground">
+              Task date
+            </label>
+            <input id="task-date" required name="recurrence_start_date" type="date" value={recurrenceStartDate} onChange={(event) => setRecurrenceStartDate(event.target.value)} className={`${fieldClassName} h-12`} />
+            <div className="mt-2 flex gap-2">
+              <button type="button" onClick={() => setRecurrenceStartDate(getLocalDateInputValue())} className="rounded-md border border-border-control px-3 py-1.5 text-sm font-medium text-text-muted transition-colors hover:bg-surface-hover hover:text-foreground">
+                Today
+              </button>
+              <button type="button" onClick={() => setRecurrenceStartDate(getLocalDateInputValue(1))} className="rounded-md border border-border-control px-3 py-1.5 text-sm font-medium text-text-muted transition-colors hover:bg-surface-hover hover:text-foreground">
+                Tomorrow
+              </button>
+            </div>
+          </div>
         ) : (
           <>
             <div className="grid items-start gap-6 sm:grid-cols-2">
