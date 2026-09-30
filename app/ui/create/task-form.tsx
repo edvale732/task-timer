@@ -8,6 +8,14 @@ import type { CreateTaskState } from "@/app/lib/types";
 const fieldClassName = "mt-2 w-full rounded-xl border border-border-strong bg-background px-4 py-3 text-foreground outline-none transition placeholder:text-text-placeholder focus:border-action";
 const initialCreateTaskState: CreateTaskState = { message: "" };
 
+function getLocalDateInputValue() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function TaskForm() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -15,7 +23,7 @@ export default function TaskForm() {
   const [recurrenceType, setRecurrenceType] = useState<"once" | "recurring">("once");
   const [recurrenceInterval, setRecurrenceInterval] = useState("1");
   const [recurrenceUnit, setRecurrenceUnit] = useState("day");
-  const [recurrenceStartDate, setRecurrenceStartDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [recurrenceStartDate, setRecurrenceStartDate] = useState(getLocalDateInputValue);
   const [successMessage, setSuccessMessage] = useState("");
   const [successSeconds, setSuccessSeconds] = useState(0);
   const successTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,7 +47,7 @@ export default function TaskForm() {
     setRecurrenceType("once");
     setRecurrenceInterval("1");
     setRecurrenceUnit("day");
-    setRecurrenceStartDate(new Date().toISOString().slice(0, 10));
+    setRecurrenceStartDate(getLocalDateInputValue());
   }
 
   const [state, formAction, isPending] = useActionState(async (previousState: typeof initialCreateTaskState, formData: FormData) => {
@@ -127,7 +135,12 @@ export default function TaskForm() {
           </label>
         </div>
 
-        {recurrenceType === "recurring" && (
+        {recurrenceType === "once" ? (
+          <label className="block text-sm font-semibold text-foreground">
+            Task date
+            <input required name="recurrence_start_date" type="date" value={recurrenceStartDate} onChange={(event) => setRecurrenceStartDate(event.target.value)} className={`${fieldClassName} h-12`} />
+          </label>
+        ) : (
           <>
             <div className="grid items-start gap-6 sm:grid-cols-2">
               <label className="grid grid-rows-[1.25rem_3rem] gap-2 text-sm font-semibold text-foreground">

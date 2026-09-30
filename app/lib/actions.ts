@@ -12,6 +12,12 @@ import type {
 	StopTaskResult,
 } from "@/app/lib/types";
 
+function isValidDateInput(value: string) {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number(value.slice(0, 4)) < 1) return false;
+	const date = new Date(`${value}T00:00:00.000Z`);
+	return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 export async function createTask(
 	_previousState: CreateTaskState,
 	formData: FormData,
@@ -42,12 +48,8 @@ export async function createTask(
 		return { message: "Choose whether the task repeats.", error: true };
 	}
 
-	const recurrenceStartDate = recurrenceType === "once"
-		? new Date().toISOString().slice(0, 10)
-		: recurrenceStartDateInput;
-
-	if (recurrenceType === "recurring" && !/^\d{4}-\d{2}-\d{2}$/.test(recurrenceStartDate)) {
-		return { message: "Choose a recurrence start date.", error: true };
+	if (!isValidDateInput(recurrenceStartDateInput)) {
+		return { message: "Choose a valid task date.", error: true };
 	}
 
 	let recurrenceInterval: number | null = null;
@@ -74,7 +76,7 @@ export async function createTask(
 		recurrenceType,
 		recurrenceInterval,
 		recurrenceUnit,
-		recurrenceStartDate,
+		recurrenceStartDate: recurrenceStartDateInput,
 	});
 
 	return { message: `Task "${title}" created.` };
