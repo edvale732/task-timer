@@ -24,7 +24,7 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
   const [tasks, setTasks] = useState(initialTasks);
   const [now, setNow] = useState(() => Date.now());
   const [error, setError] = useState<string | null>(null);
-  const [completionToasts, setCompletionToasts] = useState<{ id: string; title: string }[]>([]);
+  const [completionToasts, setCompletionToasts] = useState<{ id: string; title: string; coins: number }[]>([]);
   const [isPending, startTransition] = useTransition();
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
@@ -62,10 +62,10 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
         notifiedRef.current.add(task.id);
 
         if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-          new Notification("Target reached", { body: `"${task.title}" is complete! Well done` });
+          new Notification("Target reached", { body: `"${task.title}" is complete! You earned ${task.targetMinutes} coins.` });
         }
 
-        setCompletionToasts((prev) => [...prev, { id: task.id, title: task.title }]);
+        setCompletionToasts((prev) => [...prev, { id: task.id, title: task.title, coins: task.targetMinutes }]);
         setTimeout(() => {
           setCompletionToasts((prev) => prev.filter((toast) => toast.id !== task.id));
         }, 6000);
@@ -239,7 +239,7 @@ export default function TaskGrid({ initialTasks }: TaskGridProps) {
         <div className="mb-4 space-y-2">
           {completionToasts.map((toast) => (
             <p key={toast.id} className="rounded-lg border border-amber-700 bg-amber-950/40 px-4 py-2 text-sm text-amber-300">
-              🎉 &ldquo;{toast.title}&rdquo; is complete! Well done.
+              🎉 &ldquo;{toast.title}&rdquo; is complete! You earned {toast.coins} {toast.coins === 1 ? "coin" : "coins"}.
             </p>
           ))}
         </div>

@@ -143,6 +143,57 @@ export async function getTotalFocusedSeconds(userId: string): Promise<number> {
 	return Number(result.rows[0]?.totalFocusedSeconds ?? 0);
 }
 
+export async function getCoinBalance(userId: string): Promise<number> {
+	const result = await pool.query<{ coinBalance: number | string }>(
+		`WITH daily_focus AS (
+			SELECT
+				"task_id",
+				"user_id",
+				"started_at"::date AS "focusDate",
+				SUM(COALESCE(
+					"duration_seconds",
+					GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - "started_at"))))::integer
+				)) AS "focusedSeconds"
+			FROM "task_session"
+			WHERE "user_id" = $1
+			GROUP BY "task_id", "user_id", "started_at"::date
+		)
+		SELECT COALESCE(SUM(t."target_minutes"), 0)::bigint AS "coinBalance"
+		FROM daily_focus df
+		JOIN "task" t
+			ON t."id" = df."task_id"
+			AND t."user_id" = df."user_id"
+		WHERE df."focusedSeconds" >= t."target_minutes" * 60
+			AND (
+				(t."recurrence_type" = 'once' AND df."focusDate" = t."recurrence_start_date")
+				OR (
+					t."recurrence_type" = 'recurring'
+					AND df."focusDate" >= t."recurrence_start_date"
+					AND (
+						(t."recurrence_unit" = 'day' AND MOD(df."focusDate" - t."recurrence_start_date", t."recurrence_interval") = 0)
+						OR (t."recurrence_unit" = 'week' AND MOD(df."focusDate" - t."recurrence_start_date", t."recurrence_interval" * 7) = 0)
+						OR (
+							t."recurrence_unit" = 'month'
+							AND MOD(((DATE_PART('year', df."focusDate") - DATE_PART('year', t."recurrence_start_date")) * 12 + DATE_PART('month', df."focusDate") - DATE_PART('month', t."recurrence_start_date"))::integer, t."recurrence_interval") = 0
+							AND (
+								DATE_PART('day', df."focusDate") = DATE_PART('day', t."recurrence_start_date")
+								OR (
+									t."monthly_overflow_behavior" = 'last_day_of_month'
+									AND DATE_PART('day', df."focusDate") = DATE_PART('day', DATE_TRUNC('month', df."focusDate") + INTERVAL '1 month - 1 day')
+									AND DATE_PART('day', t."recurrence_start_date") > DATE_PART('day', DATE_TRUNC('month', df."focusDate") + INTERVAL '1 month - 1 day')
+								)
+							)
+						)
+					)
+				)
+			)
+		`,
+		[userId],
+	);
+
+	return Number(result.rows[0]?.coinBalance ?? 0);
+}
+
 export type StartedSession = {
 	startedAt: string;
 	stoppedTaskId: string | null;

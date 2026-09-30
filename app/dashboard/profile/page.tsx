@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { auth } from "@/app/lib/auth";
-import { getTotalFocusedSeconds } from "@/app/lib/queries";
+import { getCoinBalance, getTotalFocusedSeconds } from "@/app/lib/queries";
 import SignOutButton from "@/app/ui/sign-out-button";
 
 export const metadata: Metadata = {
@@ -25,7 +25,10 @@ export default async function Page() {
   }
 
   const { name, email, createdAt } = session.user;
-  const totalFocusedSeconds = await getTotalFocusedSeconds(session.user.id);
+  const [totalFocusedSeconds, coinBalance] = await Promise.all([
+    getTotalFocusedSeconds(session.user.id),
+    getCoinBalance(session.user.id),
+  ]);
   const totalFocusedHours = Math.floor(totalFocusedSeconds / 3600);
   const totalFocusedMinutes = Math.floor((totalFocusedSeconds % 3600) / 60);
   const totalFocusedTime = totalFocusedHours > 0
@@ -60,6 +63,10 @@ export default async function Page() {
           <div>
             <dt className="text-sm font-medium text-[#909090]">Total time focused</dt>
             <dd className="mt-2 text-[#ededed]">{totalFocusedTime}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-[#909090]">Coins</dt>
+            <dd className="mt-2 text-[#ededed]">{coinBalance.toLocaleString("en-US")}</dd>
           </div>
         </dl>
         <div className="flex flex-col items-start gap-3 p-6">
