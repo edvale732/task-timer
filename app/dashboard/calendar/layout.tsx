@@ -26,7 +26,7 @@ export default function CalendarLayout({ children }: { children: ReactNode }) {
                 key={view.href}
                 href={view.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${isActive ? "bg-action text-action-foreground" : "text-text-muted hover:bg-surface-hover hover:text-foreground"}`}
+                className={`inline-flex h-9 w-20 items-center justify-center rounded-lg text-sm font-medium transition-colors ${isActive ? "bg-action text-action-foreground" : "text-text-muted hover:bg-surface-hover hover:text-foreground"}`}
               >
                 {view.label}
               </Link>
