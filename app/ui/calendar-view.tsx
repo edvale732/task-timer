@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { isTaskDueOnDate } from "@/app/lib/functions";
 import type { CalendarTask } from "@/app/lib/types";
 
@@ -84,10 +85,12 @@ export default function CalendarView({ tasks, view }: CalendarViewProps) {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            aria-label={`Previous ${view}`}
+            title={`Previous ${view}`}
             onClick={() => setAnchor((current) => shiftPeriod(current, view, -1))}
-            className="rounded-lg border border-border-control px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
+            className="inline-flex size-9 items-center justify-center rounded-lg border border-border-control text-foreground transition-colors hover:bg-surface-hover"
           >
-            Previous
+            <ArrowLeft className="size-4" aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -101,10 +104,12 @@ export default function CalendarView({ tasks, view }: CalendarViewProps) {
           </button>
           <button
             type="button"
+            aria-label={`Next ${view}`}
+            title={`Next ${view}`}
             onClick={() => setAnchor((current) => shiftPeriod(current, view, 1))}
-            className="rounded-lg border border-border-control px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
+            className="inline-flex size-9 items-center justify-center rounded-lg border border-border-control text-foreground transition-colors hover:bg-surface-hover"
           >
-            Next
+            <ArrowRight className="size-4" aria-hidden="true" />
           </button>
         </div>
       </div>
